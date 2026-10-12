@@ -1,32 +1,33 @@
-import React from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import React, { type ComponentProps } from 'react'
+import { StyleSheet, View } from 'react-native'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { AppText } from '@/components/app-text'
-import { colors, radius } from '../theme'
+import { AppPressable } from './ui/AppPressable'
+import { colors, primaryHeight, radius, spacing, typography } from '../theme'
 
+/** Static empty state with optional icon and one primary CTA. Never fake content. */
 export function EmptyState({
   title,
   message,
   ctaLabel,
   onCta,
+  icon,
 }: {
   title: string
   message: string
   ctaLabel?: string
   onCta?: () => void
+  icon?: ComponentProps<typeof MaterialIcons>['name']
 }) {
   return (
     <View style={styles.container}>
+      {icon ? <MaterialIcons name={icon} size={32} color={colors.textTertiary} /> : null}
       <AppText style={styles.title}>{title}</AppText>
       <AppText style={styles.message}>{message}</AppText>
       {ctaLabel && onCta ? (
-        <Pressable
-          onPress={onCta}
-          accessibilityRole="button"
-          accessibilityLabel={ctaLabel}
-          style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-        >
-          <Text style={styles.ctaText}>{ctaLabel}</Text>
-        </Pressable>
+        <AppPressable onPress={onCta} accessibilityRole="button" accessibilityLabel={ctaLabel} style={styles.cta}>
+          <AppText style={styles.ctaText}>{ctaLabel}</AppText>
+        </AppPressable>
       ) : null}
     </View>
   )
@@ -35,37 +36,33 @@ export function EmptyState({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 32,
-    paddingHorizontal: 16,
+    gap: spacing.sm,
+    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.base,
   },
   title: {
     color: colors.textPrimary,
-    fontSize: 17,
-    fontWeight: '600',
+    ...typography.cardTitle,
     textAlign: 'center',
   },
   message: {
     color: colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
+    ...typography.bodyCompact,
     textAlign: 'center',
   },
   cta: {
-    marginTop: 12,
-    minHeight: 44,
-    paddingHorizontal: 20,
-    borderRadius: radius.control,
-    backgroundColor: colors.accentStrong,
+    marginTop: spacing.md,
+    minHeight: primaryHeight,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ctaPressed: {
-    backgroundColor: colors.accent,
-  },
   ctaText: {
-    color: '#FFFFFF',
+    color: colors.onAccent,
+    ...typography.label,
     fontSize: 15,
-    fontWeight: '600',
+    lineHeight: 20,
   },
 })

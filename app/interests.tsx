@@ -121,7 +121,7 @@ export default function InterestsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.canvas,
   },
   content: {
     padding: spacing.base,
@@ -161,8 +161,8 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     minHeight: 48,
-    borderRadius: radius.control,
-    backgroundColor: colors.accentStrong,
+    borderRadius: radius.md,
+    backgroundColor: colors.accentPressed,
     alignItems: 'center',
     justifyContent: 'center',
     opacity: 1,

@@ -6,45 +6,56 @@ import type { Event } from '../domain/event'
 import { formatDateBlock } from '../utils/dates'
 import { getEventStatus } from '../utils/eventStatus'
 import { EventMetaRow } from './EventMetaRow'
-import { colors, radius, spacing } from '../theme'
+import { RecommendationReason } from './RecommendationReason'
+import { colors, radius, spacing, touchTarget } from '../theme'
+import { selectionFeedback } from '../utils/haptics'
+import { EventArtwork } from './EventArtwork'
 
+/**
+ * Compact catalog card. The open target is an absolutely-positioned Pressable
+ * filling the whole card, so any tap outside the save control opens the
+ * event. The save Pressable is a sibling — never a child — keeping
+ * react-native-web HTML valid and save presses from ever triggering onOpen;
+ * it stacks above the open target (zIndex + draw order) and its layout slot
+ * is reserved by the trailing spacer View. The pressed highlight lives on the
+ * card root so it never covers the content.
+ */
 export function EventCard({
   event,
   saved,
   onSave,
   onOpen,
   now,
+  reasonKey,
 }: {
   event: Event
   saved: boolean
   onSave: (eventId: string) => void
   onOpen: (eventId: string) => void
   now: Date
+  /** Truthful match reason; only pass it inside personalized sections. */
+  reasonKey?: string
 }) {
   const { month, day } = formatDateBlock(event.startAt)
   const ended = getEventStatus(event, now) === 'ended'
-  // The open target is an absolutely-positioned Pressable filling the whole
-  // card (padding included), so any tap outside the save control opens the
-  // event. The save Pressable is a sibling — never a child — which keeps
-  // react-native-web HTML valid (<button> inside <button> is illegal) and
-  // save presses from ever triggering onOpen; it stacks above the open
-  // target (zIndex + draw order) and its layout slot is reserved by the
-  // trailing spacer View. The pressed highlight lives on the card root so
-  // it never covers the content (the touch overlay sits above the content).
   const [pressed, setPressed] = useState(false)
   return (
     <View style={[styles.card, pressed && styles.cardPressed]}>
       <View style={styles.contentRow}>
-        <View style={styles.dateBlock}>
-          <AppText style={styles.dateMonth}>{month}</AppText>
-          <AppText style={styles.dateDay}>{day}</AppText>
-        </View>
+        <EventArtwork event={event} variant="thumb" />
         <View style={styles.body}>
+          <AppText style={styles.dateOverline}>
+            {month} {day}
+          </AppText>
           <AppText style={styles.title} numberOfLines={2}>
             {event.title}
           </AppText>
+          <AppText style={styles.organizer} numberOfLines={1}>
+            {event.organizer}
+          </AppText>
           <EventMetaRow event={event} />
           {ended ? <AppText style={styles.ended}>Ended</AppText> : null}
+          {reasonKey ? <RecommendationReason reasonKey={reasonKey} /> : null}
         </View>
         <View style={styles.saveSlot} />
       </View>
@@ -57,8 +68,10 @@ export function EventCard({
         style={styles.openTarget}
       />
       <Pressable
-        onPress={() => onSave(event.id)}
-        hitSlop={8}
+        onPress={() => {
+          selectionFeedback()
+          onSave(event.id)
+        }}
         accessibilityRole="button"
         accessibilityLabel={saved ? `Unsave ${event.title}` : `Save ${event.title}`}
         style={({ pressed: savePressed }) => [styles.saveButton, savePressed && styles.savePressed]}
@@ -76,11 +89,11 @@ export function EventCard({
 const styles = StyleSheet.create({
   card: {
     minHeight: 88,
-    padding: spacing.base,
-    borderRadius: radius.card,
+    padding: spacing.md,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     justifyContent: 'center',
   },
   contentRow: {
@@ -88,57 +101,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  // Reserve the trailing 44pt slot so the absolutely-positioned save control
-  // aligns exactly where the in-flow save button used to sit.
+  // Reserve the trailing 48pt slot so the absolutely-positioned save control
+  // aligns with the reserved space and never overlaps the text body.
   saveSlot: {
-    width: 44,
+    width: touchTarget,
   },
-  // Transparent absolute-fill touch overlay drawn above the content row;
-  // the visual pressed state is applied to the card root instead.
-  // RN 0.86 removed `StyleSheet.absoluteFillObject` from the public types,
-  // so the overlay spreads an explicit equivalent literal instead.
   openTarget: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    borderRadius: radius.card,
+    borderRadius: radius.md,
     zIndex: 1,
   },
   cardPressed: {
-    backgroundColor: colors.surfaceElevated,
-  },
-  dateBlock: {
-    width: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.control,
-    backgroundColor: colors.surfaceElevated,
-  },
-  dateMonth: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 14,
-  },
-  dateDay: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
+    backgroundColor: colors.surfacePressed,
   },
   body: {
     flex: 1,
     gap: 4,
+  },
+  dateOverline: {
+    color: colors.accent,
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
+    letterSpacing: 0.8,
   },
   title: {
     color: colors.textPrimary,
     fontSize: 17,
     fontWeight: '600',
     lineHeight: 23,
+  },
+  organizer: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
   },
   ended: {
     color: colors.danger,
@@ -148,11 +148,11 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     position: 'absolute',
-    right: spacing.base,
+    right: spacing.xs,
     top: '50%',
-    marginTop: -22,
-    width: 44,
-    height: 44,
+    marginTop: -touchTarget / 2,
+    width: touchTarget,
+    height: touchTarget,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,

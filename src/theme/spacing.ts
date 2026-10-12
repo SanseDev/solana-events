@@ -1,4 +1,4 @@
-/** Spacing scale (px) from docs/implementation-plan.md §7. */
+/** Spacing scale (px): 4, 8, 12, 16, 20, 24, 32, 40. */
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -7,14 +7,23 @@ export const spacing = {
   lg: 20,
   xl: 24,
   xxl: 32,
+  xxxl: 40,
 } as const
 
 export type SpacingToken = keyof typeof spacing
 
 export const radius = {
-  control: 12,
-  card: 16,
+  sm: 10,
+  md: 14,
+  lg: 18,
+  pill: 999,
 } as const
 
-/** Minimum accessible touch target. */
-export const touchTarget = 44
+/** Minimum accessible touch target; primary actions use `primaryHeight`. */
+export const touchTarget = 48
+export const primaryHeight = 52
+export const chipHeight = 36
+/** Screen horizontal padding. */
+export const screenPadding = spacing.lg
+/** Separation between major screen sections. */
+export const sectionGap = spacing.xxl

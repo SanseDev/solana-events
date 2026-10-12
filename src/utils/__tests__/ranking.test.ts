@@ -1,23 +1,29 @@
 import { makeFixtureEvent } from '../../domain/event-fixture'
-import type { Interests } from '../../domain/event'
-import { rankByInterests, scoreEvent } from '../ranking'
+import type { PreferenceProfile } from '../../domain/event'
+import { emptyProfile, recommendEvents, scoreEvent } from '../ranking'
 
-const interests: Interests = { topics: ['defi', 'mobile'], communityIds: ['community-a'] }
+const profile: PreferenceProfile = {
+  intent: [],
+  topics: ['defi', 'mobile'],
+  communityIds: ['community-a'],
+  participation: 'both',
+  location: null,
+}
 
 describe('scoreEvent', () => {
   it('scores zero with no overlap', () => {
     const event = makeFixtureEvent({ topics: ['nfts'], communityIds: ['community-x'] })
-    expect(scoreEvent(event, interests)).toBe(0)
+    expect(scoreEvent(event, profile)).toBe(0)
   })
 
   it('adds 2 per matching topic', () => {
     const event = makeFixtureEvent({ topics: ['defi', 'mobile', 'nfts'], communityIds: [] })
-    expect(scoreEvent(event, interests)).toBe(4)
+    expect(scoreEvent(event, profile)).toBe(4)
   })
 
   it('adds 1 per matching community', () => {
     const event = makeFixtureEvent({ topics: [], communityIds: ['community-a'] })
-    expect(scoreEvent(event, interests)).toBe(1)
+    expect(scoreEvent(event, profile)).toBe(1)
   })
 
   it('combines topics and communities', () => {
@@ -25,23 +31,55 @@ describe('scoreEvent', () => {
       topics: ['defi', 'mobile'],
       communityIds: ['community-a', 'community-b'],
     })
-    expect(scoreEvent(event, interests)).toBe(5)
+    expect(scoreEvent(event, profile)).toBe(5)
   })
 
-  it('scores zero with empty interests', () => {
-    expect(scoreEvent(makeFixtureEvent(), { topics: [], communityIds: [] })).toBe(0)
+  it('scores zero with an empty profile', () => {
+    expect(scoreEvent(makeFixtureEvent(), emptyProfile)).toBe(0)
+  })
+
+  describe('intent rules', () => {
+    it('learn scores workshops and developer-topic events', () => {
+      const learn: PreferenceProfile = { ...emptyProfile, intent: ['learn'] }
+      const workshop = makeFixtureEvent({ topics: ['nfts'], format: 'workshop' })
+      const devTalk = makeFixtureEvent({ topics: ['developers'], format: 'conference' })
+      const other = makeFixtureEvent({ topics: ['nfts'], format: 'meetup' })
+      expect(scoreEvent(workshop, learn)).toBe(1)
+      expect(scoreEvent(devTalk, learn)).toBe(1)
+      expect(scoreEvent(other, learn)).toBe(0)
+    })
+
+    it('meet_people scores in-person or hybrid community formats', () => {
+      const social: PreferenceProfile = { ...emptyProfile, intent: ['meet_people'] }
+      const meetup = makeFixtureEvent({ format: 'meetup', attendanceMode: 'in_person' })
+      const hybridCommunity = makeFixtureEvent({ format: 'community_event', attendanceMode: 'hybrid' })
+      const onlineMeetup = makeFixtureEvent({ format: 'meetup', attendanceMode: 'online' })
+      const inPersonConference = makeFixtureEvent({ format: 'conference', attendanceMode: 'in_person' })
+      expect(scoreEvent(meetup, social)).toBe(1)
+      expect(scoreEvent(hybridCommunity, social)).toBe(1)
+      expect(scoreEvent(onlineMeetup, social)).toBe(0)
+      expect(scoreEvent(inPersonConference, social)).toBe(0)
+    })
+
+    it('hackathons scores hackathon format', () => {
+      const builder: PreferenceProfile = { ...emptyProfile, intent: ['hackathons'] }
+      const hackathon = makeFixtureEvent({ format: 'hackathon' })
+      expect(scoreEvent(hackathon, builder)).toBe(1)
+      expect(scoreEvent(makeFixtureEvent({ format: 'workshop' }), builder)).toBe(0)
+    })
+
+    it('communities scores events that carry community ids', () => {
+      const curious: PreferenceProfile = { ...emptyProfile, intent: ['communities'] }
+      const withCommunity = makeFixtureEvent({ communityIds: ['superteam'] })
+      const solo = makeFixtureEvent({ communityIds: [] })
+      expect(scoreEvent(withCommunity, curious)).toBe(1)
+      expect(scoreEvent(solo, curious)).toBe(0)
+    })
   })
 })
 
-describe('rankByInterests', () => {
-  it('sorts by score descending', () => {
-    const low = makeFixtureEvent({ id: 'fixture-low', topics: ['nfts'] })
-    const high = makeFixtureEvent({ id: 'fixture-high', topics: ['defi', 'mobile'] })
-    const result = rankByInterests([low, high], interests)
-    expect(result.map((e) => e.id)).toEqual(['fixture-high', 'fixture-low'])
-  })
-
-  it('breaks ties by startAt ascending', () => {
+describe('recommendEvents', () => {
+  it('sorts by score descending with startAt ascending tie-break', () => {
     const later = makeFixtureEvent({
       id: 'fixture-later',
       topics: ['defi'],
@@ -54,8 +92,8 @@ describe('rankByInterests', () => {
       startAt: '2026-11-01T18:00:00+01:00',
       endAt: '2026-11-01T22:00:00+01:00',
     })
-    const result = rankByInterests([later, earlier], interests)
-    expect(result.map((e) => e.id)).toEqual(['fixture-earlier', 'fixture-later'])
+    const result = recommendEvents([later, earlier], profile)
+    expect(result.map((r) => r.event.id)).toEqual(['fixture-earlier', 'fixture-later'])
   })
 
   it('keeps zero-score events at the end sorted by startAt', () => {
@@ -72,7 +110,39 @@ describe('rankByInterests', () => {
       startAt: '2026-11-01T18:00:00+01:00',
       endAt: '2026-11-01T22:00:00+01:00',
     })
-    const result = rankByInterests([zeroLater, matched, zeroEarlier], interests)
-    expect(result.map((e) => e.id)).toEqual(['fixture-matched', 'fixture-zero-earlier', 'fixture-zero-later'])
+    const result = recommendEvents([zeroLater, matched, zeroEarlier], profile)
+    expect(result.map((r) => r.event.id)).toEqual(['fixture-matched', 'fixture-zero-earlier', 'fixture-zero-later'])
+  })
+
+  it('returns deduplicated reason keys', () => {
+    const event = makeFixtureEvent({
+      topics: ['defi', 'mobile'],
+      communityIds: ['community-a'],
+    })
+    const [recommendation] = recommendEvents([event], profile)
+    expect(recommendation.score).toBe(5)
+    expect(recommendation.reasonKeys).toEqual(['topic:defi', 'topic:mobile', 'community:community-a'])
+  })
+
+  it('includes intent reason keys once per matching intent', () => {
+    const builderProfile: PreferenceProfile = { ...emptyProfile, intent: ['hackathons', 'learn'] }
+    const hackathon = makeFixtureEvent({ format: 'hackathon', topics: ['developers'] })
+    const [recommendation] = recommendEvents([hackathon], builderProfile)
+    expect(recommendation.reasonKeys).toEqual(['intent:learn', 'intent:hackathons'])
+  })
+
+  it('returns no reasons and zero score for unmatched events', () => {
+    const event = makeFixtureEvent({ topics: ['nfts'], communityIds: [] })
+    const [recommendation] = recommendEvents([event], profile)
+    expect(recommendation.score).toBe(0)
+    expect(recommendation.reasonKeys).toEqual([])
+  })
+
+  it('never mutates the input array', () => {
+    const a = makeFixtureEvent({ id: 'fixture-a', topics: ['nfts'] })
+    const b = makeFixtureEvent({ id: 'fixture-b', topics: ['defi'] })
+    const input = [a, b]
+    recommendEvents(input, profile)
+    expect(input.map((e) => e.id)).toEqual(['fixture-a', 'fixture-b'])
   })
 })

@@ -31,6 +31,19 @@ export function formatDateBlock(iso: string): { month: string; day: string } {
   return { month: monthName.toUpperCase(), day: parts.day }
 }
 
+/** Event-local clock time, e.g. `18:00`. */
+export function formatTimeShort(iso: string): string {
+  return toLocalParts(iso).time
+}
+
+/** Event-local time span for cards: `18:00–22:00`, or the start time across days. */
+export function formatCardTimeRange(startIso: string, endIso: string): string {
+  const start = toLocalParts(startIso)
+  const end = toLocalParts(endIso)
+  const sameDay = start.year === end.year && start.month === end.month && start.day === end.day
+  return sameDay ? `${start.time}–${end.time}` : start.time
+}
+
 /** Human-readable range, e.g. `10 Nov 2026, 18:00–22:00 CET`. */
 export function formatEventDateRange(startIso: string, endIso: string, timezoneLabel: string) {
   const start = toLocalParts(startIso)

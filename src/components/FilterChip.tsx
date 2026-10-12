@@ -1,24 +1,30 @@
 import React from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text } from 'react-native'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import { colors, radius } from '../theme'
+import { colors, chipHeight, radius, spacing } from '../theme'
+import { selectionFeedback } from '../utils/haptics'
 
 export function FilterChip({
   label,
   selected,
   onPress,
   onRemove,
+  disabled = false,
 }: {
   label: string
   selected: boolean
   onPress: () => void
   /** When set, renders the removable active-filter variant. */
   onRemove?: () => void
+  disabled?: boolean
 }) {
   if (onRemove) {
     return (
       <Pressable
-        onPress={onRemove}
+        onPress={() => {
+          selectionFeedback()
+          onRemove()
+        }}
         accessibilityRole="button"
         accessibilityLabel={`Remove filter ${label}`}
         style={({ pressed }) => [styles.chip, styles.removable, pressed && styles.chipPressed]}
@@ -30,17 +36,21 @@ export function FilterChip({
   }
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        selectionFeedback()
+        onPress()
+      }}
+      disabled={disabled}
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
       accessibilityLabel={label}
       style={({ pressed }) => [
         styles.chip,
         selected ? styles.chipSelected : styles.chipIdle,
+        disabled && styles.chipDisabled,
         pressed && styles.chipPressed,
       ]}
     >
-      <View style={selected ? styles.dotSelected : styles.dotIdle} />
       <Text style={selected ? styles.selectedText : styles.idleText}>{label}</Text>
     </Pressable>
   )
@@ -48,41 +58,32 @@ export function FilterChip({
 
 const styles = StyleSheet.create({
   chip: {
-    minHeight: 36,
+    minHeight: chipHeight,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.control,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
     borderWidth: 1,
   },
   removable: {
-    backgroundColor: colors.surfaceElevated,
-    borderColor: colors.accent,
+    backgroundColor: colors.accentMuted,
+    borderColor: colors.borderStrong,
   },
   chipIdle: {
     backgroundColor: colors.surface,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
   },
   chipSelected: {
     backgroundColor: colors.accent,
     borderColor: colors.accent,
   },
+  chipDisabled: {
+    opacity: 0.5,
+  },
   chipPressed: {
     opacity: 0.8,
-  },
-  dotIdle: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.textSecondary,
-  },
-  dotSelected: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFFFFF',
   },
   idleText: {
     color: colors.textSecondary,
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   selectedText: {
-    color: '#FFFFFF',
+    color: colors.onAccent,
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,

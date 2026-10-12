@@ -234,7 +234,7 @@ export default function EventDetailScreen() {
 const detailStyles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.canvas,
   },
   content: {
     padding: spacing.base,
@@ -271,10 +271,10 @@ const detailStyles = StyleSheet.create({
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radius.control,
-    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
   },
   badgeText: {
     color: colors.textSecondary,
@@ -285,10 +285,10 @@ const detailStyles = StyleSheet.create({
   block: {
     gap: spacing.xs,
     padding: spacing.base,
-    borderRadius: radius.card,
+    borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
   },
   blockLabel: {
     color: colors.textSecondary,
@@ -314,10 +314,10 @@ const detailStyles = StyleSheet.create({
   staticChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radius.control,
-    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
   },
   staticChipText: {
     color: colors.textSecondary,
@@ -341,8 +341,8 @@ const detailStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    borderRadius: radius.control,
-    backgroundColor: colors.accentStrong,
+    borderRadius: radius.md,
+    backgroundColor: colors.accentPressed,
   },
   primaryText: {
     color: '#FFFFFF',
@@ -353,7 +353,7 @@ const detailStyles = StyleSheet.create({
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.control,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.accent,
   },
@@ -363,7 +363,7 @@ const detailStyles = StyleSheet.create({
     fontWeight: '600',
   },
   disabledButton: {
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     opacity: 0.7,
   },
   disabledText: {

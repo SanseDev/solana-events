@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Solana Events",
+    "name": "Solwhere",
     "slug": "solana-events",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0B1020"
+        "backgroundColor": "#090D18"
       },
       "package": "com.sansedev.solwhere"
     },
@@ -28,15 +28,15 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "Allow Solana Events to add events you choose to your calendar."
+          "calendarPermission": "Allow Solwhere to add events you choose to your calendar."
         }
       ],
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B1020",
+          "backgroundColor": "#090D18",
           "dark": {
-            "backgroundColor": "#0B1020",
+            "backgroundColor": "#090D18",
             "image": "./assets/images/splash-icon.png"
           },
           "image": "./assets/images/splash-icon.png",

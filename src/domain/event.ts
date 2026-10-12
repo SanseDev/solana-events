@@ -40,6 +40,41 @@ export const ATTENDANCE_MODE_LABELS: Record<AttendanceMode, string> = {
   hybrid: 'Hybrid',
 }
 
+export type Intent = 'learn' | 'meet_people' | 'hackathons' | 'communities'
+
+export const INTENTS: readonly Intent[] = ['learn', 'meet_people', 'hackathons', 'communities'] as const
+
+export const INTENT_LABELS: Record<Intent, string> = {
+  learn: 'Learn',
+  meet_people: 'Meet people',
+  hackathons: 'Join hackathons',
+  communities: 'Discover communities',
+}
+
+export type ParticipationPreference = 'online' | 'in_person' | 'both'
+
+export const PARTICIPATION_PREFERENCES: readonly ParticipationPreference[] = ['online', 'in_person', 'both'] as const
+
+export const PARTICIPATION_LABELS: Record<ParticipationPreference, string> = {
+  online: 'Online',
+  in_person: 'In person',
+  both: 'Both',
+}
+
+export interface LocationPreference {
+  city: string
+  country: string
+}
+
+/** Local preference profile persisted under `solana-events:preferences:v2`. */
+export interface PreferenceProfile {
+  intent: Intent[]
+  topics: Topic[]
+  communityIds: string[]
+  participation: ParticipationPreference
+  location: LocationPreference | null
+}
+
 export interface Event {
   id: string
   title: string

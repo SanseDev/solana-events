@@ -16,7 +16,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
-  "displayName": "Solana Events",
+  "displayName": "Solwhere",
   "description": "Discover Solana events that match your interests, communities, and location.",
   "usecase": "Mobile",
   "keywords": [

@@ -6,8 +6,8 @@ import { colors } from '@/src/theme/colors'
  * Dark-only MVP: light mirrors dark.
  */
 const palette = {
-  background: colors.background,
-  border: colors.border,
+  background: colors.canvas,
+  border: colors.borderSubtle,
   icon: colors.textSecondary,
   tabIconDefault: colors.textSecondary,
   tabIconSelected: colors.accent,

@@ -61,7 +61,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.canvas,
   },
   content: {
     padding: spacing.base,
@@ -85,10 +85,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.base,
-    borderRadius: radius.card,
+    borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
   },
   communityText: {
     flex: 1,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     minHeight: 44,
-    borderRadius: radius.control,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.accent,
     alignItems: 'center',

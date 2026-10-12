@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText } from '@/components/app-text'
-import type { AttendanceFilter, EventFilters } from '../domain/filters'
+import { applyFilters, distinctLocations, locationLabel, type EventFilters } from '../domain/filters'
 import {
   ATTENDANCE_MODES,
   ATTENDANCE_MODE_LABELS,
@@ -10,57 +10,95 @@ import {
   EVENT_FORMAT_LABELS,
   TOPICS,
   TOPIC_LABELS,
+  type AttendanceMode,
+  type Event,
+  type EventFormat,
+  type Topic,
 } from '../domain/event'
 import { FilterChip } from './FilterChip'
-import { colors, radius, spacing } from '../theme'
+import { AppPressable } from './ui/AppPressable'
+import { colors, primaryHeight, radius, spacing, typography } from '../theme'
+import { selectionFeedback } from '../utils/haptics'
 
 /**
  * The sheet content is mounted only while the modal is visible, so the draft
- * filter state is initialized from the current filters on every open without
- * needing a setState-in-effect reset.
+ * filter state is initialized from the current filters on every open. It owns
+ * topics, formats, attendance, date range, and location, and shows the result
+ * count on apply. Quick controls write the same filter state.
  */
 export function FilterSheet({
   visible,
   filters,
+  events,
+  query,
+  now,
   onClose,
   onApply,
 }: {
   visible: boolean
   filters: EventFilters
+  events: readonly Event[]
+  query: string
+  now: Date
   onClose: () => void
   onApply: (filters: EventFilters) => void
 }) {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
-      {visible ? <FilterSheetContent filters={filters} onClose={onClose} onApply={onApply} /> : null}
+      {visible ? (
+        <FilterSheetContent
+          filters={filters}
+          events={events}
+          query={query}
+          now={now}
+          onClose={onClose}
+          onApply={onApply}
+        />
+      ) : null}
     </Modal>
   )
 }
 
 function FilterSheetContent({
   filters,
+  events,
+  query,
+  now,
   onClose,
   onApply,
 }: {
   filters: EventFilters
+  events: readonly Event[]
+  query: string
+  now: Date
   onClose: () => void
   onApply: (filters: EventFilters) => void
 }) {
   const [draft, setDraft] = useState<EventFilters>(filters)
+  const locations = distinctLocations(events)
+  const resultCount = applyFilters(events, query, draft, now).length
 
-  const toggleTopic = (topic: EventFilters['topics'][number]) =>
+  const toggleTopic = (topic: Topic) =>
     setDraft((d) => ({
       ...d,
       topics: d.topics.includes(topic) ? d.topics.filter((t) => t !== topic) : [...d.topics, topic],
     }))
 
-  const toggleFormat = (format: EventFilters['formats'][number]) =>
+  const toggleFormat = (format: EventFormat) =>
     setDraft((d) => ({
       ...d,
       formats: d.formats.includes(format) ? d.formats.filter((f) => f !== format) : [...d.formats, format],
     }))
 
-  const setAttendance = (attendance: AttendanceFilter) => setDraft((d) => ({ ...d, attendance }))
+  const toggleAttendance = (mode: AttendanceMode) =>
+    setDraft((d) => ({
+      ...d,
+      attendance: d.attendance.includes(mode) ? d.attendance.filter((m) => m !== mode) : [...d.attendance, mode],
+    }))
+
+  const setLocation = (location: EventFilters['location']) => setDraft((d) => ({ ...d, location }))
+
+  const toggleThisWeek = () => setDraft((d) => ({ ...d, dateRange: d.dateRange === 'this_week' ? 'any' : 'this_week' }))
 
   return (
     <View style={styles.backdrop}>
@@ -69,7 +107,7 @@ function FilterSheetContent({
         <View style={styles.header}>
           <AppText style={styles.title}>Filters</AppText>
           <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
-            <Text style={styles.closeText}>Close</Text>
+            <AppText style={styles.closeText}>Close</AppText>
           </Pressable>
         </View>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentPadding}>
@@ -97,36 +135,55 @@ function FilterSheetContent({
           </View>
           <AppText style={styles.sectionLabel}>Attendance</AppText>
           <View style={styles.chipWrap}>
-            {(['any', ...ATTENDANCE_MODES] as AttendanceFilter[]).map((mode) => (
+            {ATTENDANCE_MODES.map((mode) => (
               <FilterChip
                 key={mode}
-                label={mode === 'any' ? 'Any' : ATTENDANCE_MODE_LABELS[mode]}
-                selected={draft.attendance === mode}
-                onPress={() => setAttendance(mode)}
+                label={ATTENDANCE_MODE_LABELS[mode]}
+                selected={draft.attendance.includes(mode)}
+                onPress={() => toggleAttendance(mode)}
+              />
+            ))}
+          </View>
+          <AppText style={styles.sectionLabel}>Dates</AppText>
+          <View style={styles.chipWrap}>
+            <FilterChip label="This week" selected={draft.dateRange === 'this_week'} onPress={toggleThisWeek} />
+          </View>
+          <AppText style={styles.sectionLabel}>Location</AppText>
+          <View style={styles.chipWrap}>
+            <FilterChip label="Anywhere" selected={draft.location === null} onPress={() => setLocation(null)} />
+            {locations.map((location) => (
+              <FilterChip
+                key={`${location.city}-${location.country}`}
+                label={locationLabel(location)}
+                selected={draft.location?.city === location.city && draft.location?.country === location.country}
+                onPress={() => setLocation(location)}
               />
             ))}
           </View>
         </ScrollView>
         <View style={styles.actions}>
-          <Pressable
-            onPress={() => setDraft({ topics: [], formats: [], attendance: 'any' })}
+          <AppPressable
+            onPress={() => {
+              selectionFeedback()
+              setDraft({ topics: [], formats: [], attendance: [], dateRange: 'any', location: null })
+            }}
             accessibilityRole="button"
             accessibilityLabel="Reset filters"
-            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
+            style={styles.secondaryButton}
           >
-            <Text style={styles.secondaryText}>Reset</Text>
-          </Pressable>
-          <Pressable
+            <AppText style={styles.secondaryText}>Reset</AppText>
+          </AppPressable>
+          <AppPressable
             onPress={() => {
               onApply(draft)
               onClose()
             }}
             accessibilityRole="button"
-            accessibilityLabel="Show results"
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
+            accessibilityLabel={`Show results, ${resultCount} events`}
+            style={styles.primaryButton}
           >
-            <Text style={styles.primaryText}>Show results</Text>
-          </Pressable>
+            <AppText style={styles.primaryText}>Show results ({resultCount})</AppText>
+          </AppPressable>
         </View>
       </SafeAreaView>
     </View>
@@ -140,49 +197,46 @@ const styles = StyleSheet.create({
   },
   backdropPress: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(4,7,14,0.6)',
   },
   sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.card,
-    borderTopRightRadius: radius.card,
+    backgroundColor: colors.canvasRaised,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     maxHeight: '80%',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.base,
     paddingBottom: spacing.sm,
   },
   title: {
     color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 26,
+    ...typography.sectionTitle,
   },
   closeText: {
     color: colors.accent,
     fontSize: 15,
     fontWeight: '600',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     paddingHorizontal: 4,
   },
   content: {
     flexGrow: 0,
   },
   contentPadding: {
-    paddingHorizontal: spacing.base,
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.base,
     gap: spacing.sm,
   },
   sectionLabel: {
     color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
+    ...typography.label,
     marginTop: spacing.sm,
   },
   chipWrap: {
@@ -195,36 +249,35 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.base,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.borderSubtle,
   },
   primaryButton: {
     flex: 1,
-    minHeight: 44,
-    borderRadius: radius.control,
-    backgroundColor: colors.accentStrong,
+    minHeight: primaryHeight,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButton: {
-    minHeight: 44,
-    paddingHorizontal: 20,
-    borderRadius: radius.control,
+    minHeight: primaryHeight,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '600',
+    lineHeight: 20,
   },
   secondaryText: {
     color: colors.textSecondary,
     fontSize: 15,
     fontWeight: '600',
-  },
-  pressed: {
-    opacity: 0.8,
+    lineHeight: 20,
   },
 })

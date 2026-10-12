@@ -1,36 +1,74 @@
 import React, { useMemo, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { AppText } from '@/components/app-text'
 import { EmptyState } from '@/src/components/EmptyState'
 import { EventCard } from '@/src/components/EventCard'
+import { FeaturedEvent } from '@/src/components/FeaturedEvent'
 import { FilterChip } from '@/src/components/FilterChip'
 import { FilterSheet } from '@/src/components/FilterSheet'
+import { LocationSheet } from '@/src/components/LocationSheet'
+import { QuickControls } from '@/src/components/QuickControls'
 import { SectionHeader } from '@/src/components/SectionHeader'
-import { getUpcomingEvents } from '@/src/data/eventCatalog'
+import { IconButton } from '@/src/components/ui/IconButton'
+import { getAllEvents, getUpcomingEvents } from '@/src/data/eventCatalog'
 import { useEventFilters } from '@/src/hooks/useEventFilters'
 import { useFavorites } from '@/src/hooks/useFavorites'
 import { useInterests } from '@/src/hooks/useInterests'
-import { rankByInterests } from '@/src/utils/ranking'
-import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS } from '@/src/domain/event'
-import { hasActiveFilters } from '@/src/domain/filters'
-import { colors, radius, spacing } from '@/src/theme'
+import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS, type PreferenceProfile } from '@/src/domain/event'
+import { hasActiveFilters, locationLabel, type EventFilters } from '@/src/domain/filters'
+import { emptyProfile, hasPersonalization, recommendEvents } from '@/src/utils/ranking'
+import { colors, radius, screenPadding, sectionGap, spacing, touchTarget, typography } from '@/src/theme'
 
 export default function DiscoverScreen() {
   const now = useMemo(() => new Date(), [])
+  const catalog = useMemo(() => getAllEvents(), [])
   const upcoming = useMemo(() => getUpcomingEvents(now), [now])
   const { query, setQuery, filters, setFilters, filtered, clearFilters } = useEventFilters(upcoming)
   const [filterSheetVisible, setFilterSheetVisible] = useState(false)
+  const [locationSheetVisible, setLocationSheetVisible] = useState(false)
+  const [personalized, setPersonalized] = useState(false)
   const { isFavorite, toggleFavorite, hydrated, persistError } = useFavorites()
   const interests = useInterests()
 
-  const hasInterests = interests.topics.length > 0 || interests.communityIds.length > 0
-  const forYou = useMemo(
-    () => (hasInterests ? rankByInterests(filtered, interests) : []),
-    [filtered, hasInterests, interests],
+  // M1: topic/community interests only; M2 swaps in the full preference profile.
+  const profile = useMemo<PreferenceProfile>(
+    () => ({ ...emptyProfile, topics: interests.topics, communityIds: interests.communityIds }),
+    [interests.topics, interests.communityIds],
   )
+  const canPersonalize = hasPersonalization(profile)
+
   const filtering = query.length > 0 || hasActiveFilters(filters)
+
+  // Default layout partitions the located catalog without duplicates:
+  // earliest `Coming up` feature, up to two nonzero-score `Matched for you`
+  // picks with truthful reasons, and the chronological remainder.
+  const located = filtered
+  const showFeature = !filtering && located.length >= 3
+  const feature = showFeature ? located[0] : undefined
+  const remainder = feature ? located.slice(1) : located
+  const matched = useMemo(() => {
+    if (filtering || located.length < 3) {
+      return []
+    }
+    return recommendEvents(remainder, profile)
+      .filter((recommendation) => recommendation.score > 0)
+      .slice(0, 2)
+  }, [filtering, located.length, remainder, profile])
+  const matchedIds = useMemo(() => new Set(matched.map((m) => m.event.id)), [matched])
+  const upcomingRest = matched.length > 0 ? remainder.filter((event) => !matchedIds.has(event.id)) : remainder
+
+  const results = useMemo(() => {
+    if (!filtering) {
+      return []
+    }
+    if (personalized && canPersonalize) {
+      return recommendEvents(filtered, profile).map((recommendation) => recommendation.event)
+    }
+    return filtered
+  }, [filtering, filtered, personalized, canPersonalize, profile])
 
   const openEvent = (id: string) => router.push(`/event/${id}`)
   const save = (id: string) => toggleFavorite(id)
@@ -46,12 +84,26 @@ export default function DiscoverScreen() {
       label: EVENT_FORMAT_LABELS[format],
       remove: () => setFilters({ ...filters, formats: filters.formats.filter((f) => f !== format) }),
     })),
-    ...(filters.attendance !== 'any'
+    ...filters.attendance.map((mode) => ({
+      key: `attendance-${mode}`,
+      label: ATTENDANCE_MODE_LABELS[mode],
+      remove: () => setFilters({ ...filters, attendance: filters.attendance.filter((m) => m !== mode) }),
+    })),
+    ...(filters.dateRange !== 'any'
       ? [
           {
-            key: 'attendance',
-            label: ATTENDANCE_MODE_LABELS[filters.attendance],
-            remove: () => setFilters({ ...filters, attendance: 'any' as const }),
+            key: 'date-range',
+            label: 'This week',
+            remove: () => setFilters({ ...filters, dateRange: 'any' as const }),
+          },
+        ]
+      : []),
+    ...(filters.location
+      ? [
+          {
+            key: 'location',
+            label: locationLabel(filters.location),
+            remove: () => setFilters({ ...filters, location: null }),
           },
         ]
       : []),
@@ -60,29 +112,47 @@ export default function DiscoverScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <AppText style={styles.pageTitle}>Solana Events</AppText>
-          <AppText style={styles.subtitle}>Your ecosystem calendar</AppText>
+        <View style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <AppText style={styles.pageTitle}>Solwhere</AppText>
+            <AppText style={styles.tagline}>Find your next place in Solana.</AppText>
+          </View>
+          <Pressable
+            onPress={() => setLocationSheetVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Choose location, current ${locationLabel(filters.location)}`}
+            style={({ pressed }) => [styles.locationButton, pressed && styles.pressed]}
+          >
+            <MaterialIcons name="place" size={18} color={colors.accent} />
+            <AppText style={styles.locationLabel} numberOfLines={1}>
+              {locationLabel(filters.location)}
+            </AppText>
+          </Pressable>
         </View>
         <View style={styles.searchRow}>
           <TextInput
             style={styles.searchInput}
             placeholder="Search events or organizers"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.textTertiary}
             value={query}
             onChangeText={setQuery}
             accessibilityLabel="Search events"
             autoCorrect={false}
           />
-          <Pressable
+          <IconButton
+            name="tune"
+            label="Open filters"
             onPress={() => setFilterSheetVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Open filters"
-            style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.filterButtonText}>Filters</Text>
-          </Pressable>
+            color={colors.textPrimary}
+          />
         </View>
+        <QuickControls
+          filters={filters}
+          onFiltersChange={setFilters}
+          personalized={personalized}
+          onPersonalizedChange={setPersonalized}
+          canPersonalize={canPersonalize}
+        />
         {activeChips.length > 0 ? (
           <View style={styles.chipRow}>
             {activeChips.map((chip) => (
@@ -91,45 +161,90 @@ export default function DiscoverScreen() {
           </View>
         ) : null}
         {persistError ? <AppText style={styles.persistError}>{persistError}</AppText> : null}
-        {!hydrated ? null : filtered.length === 0 ? (
+        {!hydrated ? null : catalog.length === 0 ? (
           <EmptyState
-            title="No events match these filters"
-            message="Try removing a filter or clearing your search."
-            ctaLabel="Clear filters"
-            onCta={() => {
-              setQuery('')
-              clearFilters()
-            }}
+            title="Catalog unavailable"
+            message="The local event catalog could not be loaded. Please restart the app."
           />
-        ) : (
+        ) : filtering ? (
           <View style={styles.sections}>
-            {hasInterests && !filtering ? (
-              <View style={styles.section}>
-                <SectionHeader title="For you" />
-                {forYou.map((event) => (
+            <View style={styles.section}>
+              <SectionHeader title="Results" />
+              {results.length === 0 ? (
+                <EmptyState
+                  title="No events match these filters"
+                  message="Try removing a filter or clearing your search."
+                  ctaLabel="Clear filters"
+                  onCta={() => {
+                    setQuery('')
+                    clearFilters()
+                  }}
+                />
+              ) : (
+                results.map((event) => (
                   <EventCard
-                    key={`foryou-${event.id}`}
+                    key={event.id}
                     event={event}
                     saved={isFavorite(event.id)}
                     onSave={save}
                     onOpen={openEvent}
                     now={now}
                   />
-                ))}
-              </View>
-            ) : null}
-            <View style={styles.section}>
-              <SectionHeader title={filtering ? 'Results' : 'All upcoming'} />
-              {filtered.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  saved={isFavorite(event.id)}
+                ))
+              )}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.sections}>
+            {feature ? (
+              <View style={styles.section}>
+                <SectionHeader title="Coming up" />
+                <FeaturedEvent
+                  event={feature}
+                  saved={isFavorite(feature.id)}
                   onSave={save}
                   onOpen={openEvent}
                   now={now}
                 />
-              ))}
+              </View>
+            ) : null}
+            {matched.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title="Matched for you" />
+                {matched.map((recommendation) => (
+                  <EventCard
+                    key={recommendation.event.id}
+                    event={recommendation.event}
+                    saved={isFavorite(recommendation.event.id)}
+                    onSave={save}
+                    onOpen={openEvent}
+                    now={now}
+                    reasonKey={recommendation.reasonKeys[0]}
+                  />
+                ))}
+              </View>
+            ) : null}
+            <View style={styles.section}>
+              <SectionHeader title="Upcoming" />
+              {upcomingRest.length === 0 && !feature && matched.length === 0 ? (
+                <EmptyState
+                  title="No events for this location"
+                  message="Try another location or clear the location filter."
+                  ctaLabel="Anywhere"
+                  onCta={() => setFilters({ ...filters, location: null } as EventFilters)}
+                />
+              ) : (
+                upcomingRest.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    saved={isFavorite(event.id)}
+                    onSave={save}
+                    onOpen={openEvent}
+                    now={now}
+                  />
+                ))
+              )}
             </View>
           </View>
         )}
@@ -137,8 +252,18 @@ export default function DiscoverScreen() {
       <FilterSheet
         visible={filterSheetVisible}
         filters={filters}
+        events={upcoming}
+        query={query}
+        now={now}
         onClose={() => setFilterSheetVisible(false)}
         onApply={setFilters}
+      />
+      <LocationSheet
+        visible={locationSheetVisible}
+        location={filters.location}
+        events={catalog}
+        onClose={() => setLocationSheetVisible(false)}
+        onSelect={(location) => setFilters({ ...filters, location })}
       />
     </SafeAreaView>
   )
@@ -147,55 +272,64 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.canvas,
   },
   content: {
-    padding: spacing.base,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: screenPadding,
+    paddingTop: spacing.md,
+    paddingBottom: sectionGap,
     gap: spacing.md,
   },
-  header: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  headerText: {
+    flex: 1,
     gap: 2,
   },
   pageTitle: {
     color: colors.textPrimary,
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 34,
+    ...typography.pageTitle,
   },
-  subtitle: {
+  tagline: {
     color: colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
+    ...typography.bodyCompact,
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    minHeight: touchTarget,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    backgroundColor: colors.surface,
+  },
+  locationLabel: {
+    color: colors.textPrimary,
+    ...typography.label,
   },
   searchRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   searchInput: {
     flex: 1,
-    minHeight: 44,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.control,
+    minHeight: touchTarget,
+    paddingHorizontal: spacing.base,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     color: colors.textPrimary,
-    fontSize: 15,
-  },
-  filterButton: {
-    minHeight: 44,
-    paddingHorizontal: spacing.base,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterButtonText: {
-    color: colors.accent,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 24,
   },
   chipRow: {
     flexDirection: 'row',
@@ -204,11 +338,10 @@ const styles = StyleSheet.create({
   },
   persistError: {
     color: colors.warning,
-    fontSize: 13,
-    lineHeight: 18,
+    ...typography.label,
   },
   sections: {
-    gap: spacing.xl,
+    gap: sectionGap,
   },
   section: {
     gap: spacing.md,
