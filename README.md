@@ -6,7 +6,7 @@ Repository: <https://github.com/SanseDev/solana-events>
 
 The catalog ships inside the app: every event is researched and verified against its official source before release. No network permission, no tracking, no accounts. Connect a wallet via Mobile Wallet Adapter to identify yourself — nothing else.
 
-The catalog holds 52 verified events as of 2026-10-12 (Breakpoint week, Superteam chapter happenings, online sessions, and recurring co-working days). Per-event verification evidence, restrictions, and contradiction flags live in `docs/catalog-audit-2026-10-12.md`; the expansion process is specified in `docs/specs/20261012-catalog-expansion.md`.
+The catalog holds 51 verified events as of 2026-10-12 (Breakpoint week, Superteam chapter happenings, online sessions, and recurring co-working days). Per-event verification evidence, restrictions, and contradiction flags live in `docs/catalog-audit-2026-10-12.md`; the expansion process is specified in `docs/specs/20261012-catalog-expansion.md`.
 
 ## P0 scope (exactly what ships)
 

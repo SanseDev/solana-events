@@ -1,11 +1,21 @@
 import { getAllEvents } from '../../data/eventCatalog'
 import { artworkFamilyForFormat, artworkSeed, getEventArtworkConfig } from '../eventArtworkConfig'
 
+/** Fixed expectation table, intentionally independent of `artworkFamilyForFormat`. */
+const EXPECTED_FAMILY_BY_FORMAT = {
+  hackathon: 'hackathon',
+  conference: 'conference',
+  meetup: 'community',
+  workshop: 'workshop',
+  community_event: 'community',
+} as const
+
 describe('event artwork selection', () => {
   it('assigns catalog events to their format family', () => {
-    const events = getAllEvents()
-    const families = Object.fromEntries(events.map((event) => [event.id, getEventArtworkConfig(event).family]))
-    const expected = Object.fromEntries(events.map((event) => [event.id, artworkFamilyForFormat(event.format)]))
+    const families = Object.fromEntries(getAllEvents().map((event) => [event.id, getEventArtworkConfig(event).family]))
+    const expected = Object.fromEntries(
+      getAllEvents().map((event) => [event.id, EXPECTED_FAMILY_BY_FORMAT[event.format]]),
+    )
 
     expect(families).toEqual(expected)
     expect(families['breakpoint-2026']).toBe('conference')

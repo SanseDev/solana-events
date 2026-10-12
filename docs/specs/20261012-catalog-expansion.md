@@ -10,11 +10,11 @@ milestone: Catalog content (no product code change)
 
 ## Summary
 
-Grew `src/data/events.json` from 6 to 52 curated events by processing a researched
+Grew `src/data/events.json` from 6 to 51 curated events by processing a researched
 queue of 48 candidate organizer-published pages (Luma), verifying each against its
 page's structured metadata (schema.org JSON-LD) and rendered description before
-import. 46 candidates were added, 1 kept pending (unresolvable schedule
-contradiction), 1 excluded as out of editorial scope. One new community (`la-familia`)
+import. 45 candidates were added, 2 kept pending (unresolvable schedule or
+timezone-offset contradictions), 1 excluded as out of editorial scope. One new community (`la-familia`)
 was added; all other new events map to existing community ids or none. No schema,
 validation, or artwork changes were needed — the additions were designed to satisfy
 the existing strict catalog rules.
@@ -50,7 +50,7 @@ flowchart TD
     F -- no --> X3[Excluded: scope or ended]
     F -- yes --> G[Write entry: own-word description, exact instants, restrictions]
     G --> H[Catalog integrity tests + typecheck + lint]
-    H --> I[52-event catalog shipped]
+    H --> I[51-event catalog shipped]
 ```
 
 Description: Every candidate page is fetched, its structured Event metadata extracted,
@@ -64,7 +64,7 @@ integrity tests gate the import.
 - Unique ids, explicit-offset ISO timestamps, `endAt > startAt`, https-only URLs,
   known topics/formats/attendance modes/community ids — enforced by
   `src/data/__tests__/eventCatalog.test.ts` and re-asserted locally with a JSON
-  script (52/52 pass).
+  script (51/51 pass).
 - Cross-checks: luma.com/BP-SideEvents contains all 16 imported Breakpoint-week
   pages; solana.com/events lists Breakpoint, Hacker House, Demo Day, and Scale or Die;
   au.superteam.fun anchors match structured dates for the four Superteam AU items.
@@ -72,9 +72,11 @@ integrity tests gate the import.
 
 ## Notes for the next expansion
 
-- Re-check `luma.com/ol25ta77` (CodeCup), `luma.com/8uhc300o`, `luma.com/sejn139p`
-  for corrected schedules, then import if resolved.
-- Vancouver VibeStation Nov 6 page publishes a `-07:00` offset although PST (`-08:00`)
-  normally applies after 2026-11-01; the published instant was kept verbatim and the
-  anomaly flagged in the audit doc.
+- Re-check `luma.com/ol25ta77` (CodeCup), `luma.com/8uhc300o`, `luma.com/sejn139p`,
+  and `luma.com/8auwgdns` (Vancouver VibeStation Nov 6: page publishes `-07:00`
+  although PST `-08:00` applies after 2026-11-01) for corrected schedules, then
+  import if resolved.
+- Store each event's ISO instants with the offset whose wall time the app should
+  display (e.g. UTC for "2:30 PM UTC" sessions, GMT for London November); the
+  organizer page's offset representation may differ while keeping the same instant.
 - "NO VibeStation due to Breakpoint" pages are cancellation notices, never events.
