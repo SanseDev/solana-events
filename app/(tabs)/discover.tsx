@@ -43,14 +43,27 @@ export default function DiscoverScreen() {
     }
   }, [preferencesHydrated, profile, setFilters])
 
-  const canPersonalize = hasPersonalization(profile)
-
   const filtering = query.length > 0 || hasActiveFilters(filters)
+
+  const located = filtered
+
+  // Availability follows actual nonzero-score matches in the current eligible
+  // results, not merely nonempty profile answers: without a match the control
+  // would reorder nothing, so a selected state would lie.
+  const rankedResults = useMemo(() => recommendEvents(filtered, profile), [filtered, profile])
+  const canPersonalize = useMemo(
+    () => rankedResults.some((recommendation) => recommendation.score > 0),
+    [rankedResults],
+  )
+  // A stale `personalized` selection (filters changed, matches disappeared)
+  // must never render as active while it does nothing.
+  const personalizedActive = personalized && canPersonalize
+  // Personalized alone is a real layout: one ranked, duplicate-free list.
+  const showingResults = filtering || personalizedActive
 
   // Default layout partitions the located catalog without duplicates:
   // earliest `Coming up` feature, up to two nonzero-score `Matched for you`
   // picks with truthful reasons, and the chronological remainder.
-  const located = filtered
   const showFeature = !filtering && located.length >= 3
   const feature = showFeature ? located[0] : undefined
   const remainder = feature ? located.slice(1) : located
@@ -66,14 +79,18 @@ export default function DiscoverScreen() {
   const upcomingRest = matched.length > 0 ? remainder.filter((event) => !matchedIds.has(event.id)) : remainder
 
   const results = useMemo(() => {
-    if (!filtering) {
+    if (!showingResults) {
       return []
     }
-    if (personalized && canPersonalize) {
-      return recommendEvents(filtered, profile).map((recommendation) => recommendation.event)
+    if (personalizedActive) {
+      return rankedResults.map((recommendation) => ({
+        event: recommendation.event,
+        // Truthful reason only when a persisted choice actually matched.
+        reasonKey: recommendation.score > 0 ? recommendation.reasonKeys[0] : undefined,
+      }))
     }
-    return filtered
-  }, [filtering, filtered, personalized, canPersonalize, profile])
+    return filtered.map((event) => ({ event, reasonKey: undefined }))
+  }, [showingResults, personalizedActive, rankedResults, filtered])
 
   const openEvent = (id: string) => router.push(`/event/${id}`)
   const save = (id: string) => toggleFavorite(id)
@@ -154,10 +171,13 @@ export default function DiscoverScreen() {
         <QuickControls
           filters={filters}
           onFiltersChange={setFilters}
-          personalized={personalized}
+          personalized={personalizedActive}
           onPersonalizedChange={setPersonalized}
           canPersonalize={canPersonalize}
         />
+        {hasPersonalization(profile) && !canPersonalize ? (
+          <AppText style={styles.personalizedHint}>No current events match your preferences.</AppText>
+        ) : null}
         {activeChips.length > 0 ? (
           <View style={styles.chipRow}>
             {activeChips.map((chip) => (
@@ -171,22 +191,31 @@ export default function DiscoverScreen() {
             title="Catalog unavailable"
             message="The local event catalog could not be loaded. Please restart the app."
           />
-        ) : filtering ? (
+        ) : showingResults ? (
           <View style={styles.sections}>
             <View style={styles.section}>
-              <SectionHeader title="Results" />
+              <SectionHeader title={filtering ? 'Results' : 'For you'} />
               {results.length === 0 ? (
-                <EmptyState
-                  title="No events match these filters"
-                  message="Try removing a filter or clearing your search."
-                  ctaLabel="Clear filters"
-                  onCta={() => {
-                    setQuery('')
-                    clearFilters()
-                  }}
-                />
+                located.length === 0 ? (
+                  <EmptyState
+                    title="No events for this location"
+                    message="Try another location or clear the location filter."
+                    ctaLabel="Anywhere"
+                    onCta={() => setFilters({ ...filters, location: null } as EventFilters)}
+                  />
+                ) : (
+                  <EmptyState
+                    title="No events match these filters"
+                    message="Try removing a filter or clearing your search."
+                    ctaLabel="Clear filters"
+                    onCta={() => {
+                      setQuery('')
+                      clearFilters()
+                    }}
+                  />
+                )
               ) : (
-                results.map((event) => (
+                results.map(({ event, reasonKey }) => (
                   <EventCard
                     key={event.id}
                     event={event}
@@ -194,6 +223,7 @@ export default function DiscoverScreen() {
                     onSave={save}
                     onOpen={openEvent}
                     now={now}
+                    reasonKey={reasonKey}
                   />
                 ))
               )}
@@ -343,6 +373,10 @@ const styles = StyleSheet.create({
   },
   persistError: {
     color: colors.warning,
+    ...typography.label,
+  },
+  personalizedHint: {
+    color: colors.textTertiary,
     ...typography.label,
   },
   sections: {

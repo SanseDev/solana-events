@@ -162,6 +162,18 @@ export async function saveOnboarding(state: OnboardingState): Promise<void> {
   await writeJson(STORAGE_KEYS.onboarding, state)
 }
 
+/**
+ * Two-write onboarding completion: the profile persists first, then the
+ * completed marker. Rejects on the first failing write so the caller can keep
+ * the session on onboarding. A succeeded profile write without the marker is a
+ * safe partial state: relaunch resumes onboarding (draft intact) and never
+ * treats the incomplete save as completed onboarding.
+ */
+export async function persistOnboardingCompletion(profile: PreferenceProfile): Promise<void> {
+  await savePreferences(profile)
+  await saveOnboarding({ completed: true, step: 3, draft: profile })
+}
+
 /** True when this installation predates the v2 profile (a returning user). */
 export async function hasLegacyData(): Promise<boolean> {
   const [favorites, interests] = await Promise.all([

@@ -5,6 +5,7 @@ import {
   hasLegacyData,
   loadOnboarding,
   loadPreferences,
+  persistOnboardingCompletion,
   saveOnboarding,
   savePreferences,
   type OnboardingState,
@@ -23,8 +24,13 @@ interface PreferencesState {
   setProfile: (profile: PreferenceProfile) => void
   /** Persists draft + step so kill/relaunch resumes in place. */
   saveOnboardingDraft: (step: 1 | 2 | 3, draft: PreferenceProfile) => void
-  /** Profile write first, then completed marker (plan M2 ordering). */
-  completeOnboarding: (profile: PreferenceProfile) => void
+  /**
+   * Persists profile then the completed marker, and only flips the in-memory
+   * `onboardingCompleted` after both writes succeed. Resolves false on
+   * failure; the caller must keep the session on onboarding and let the user
+   * retry with the draft intact.
+   */
+  completeOnboarding: (profile: PreferenceProfile) => Promise<boolean>
 }
 
 const PreferencesContext = createContext<PreferencesState | null>(null)
@@ -89,15 +95,20 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
     })
   }, [])
 
-  const completeOnboarding = useCallback((finalProfile: PreferenceProfile) => {
+  const completeOnboarding = useCallback(async (finalProfile: PreferenceProfile) => {
     setPersistError(null)
-    // Profile first: if the app dies before the marker write, the resumed
-    // onboarding still holds its draft and favorites are untouched.
-    savePreferences(finalProfile)
-      .then(() => saveOnboarding({ completed: true, step: 3, draft: finalProfile }))
-      .catch(() => setPersistError(PERSIST_ERROR))
-    setProfileState(finalProfile)
-    setOnboarding({ completed: true, step: 3, draft: finalProfile })
+    try {
+      // Profile write first: if the marker write then fails (or the app dies),
+      // relaunch resumes onboarding with the draft — an incomplete save is
+      // never treated as completed onboarding.
+      await persistOnboardingCompletion(finalProfile)
+      setProfileState(finalProfile)
+      setOnboarding({ completed: true, step: 3, draft: finalProfile })
+      return true
+    } catch {
+      setPersistError(PERSIST_ERROR)
+      return false
+    }
   }, [])
 
   const value = useMemo<PreferencesState>(

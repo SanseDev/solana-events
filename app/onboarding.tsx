@@ -24,6 +24,7 @@ export default function OnboardingScreen() {
   const { onboardingStep, onboardingDraft, saveOnboardingDraft, completeOnboarding, persistError } = usePreferences()
   const [step, setStep] = useState<1 | 2 | 3>(onboardingStep)
   const [draft, setDraft] = useState<PreferenceProfile>(onboardingDraft)
+  const [submitting, setSubmitting] = useState(false)
 
   const total = STEPS.length
   const isLast = step === total
@@ -34,12 +35,33 @@ export default function OnboardingScreen() {
     saveOnboardingDraft(nextStep, nextDraft)
   }
 
-  const finish = (profile: PreferenceProfile) => {
-    completeOnboarding(profile)
-    router.replace('/(tabs)/discover')
+  const goBack = () => {
+    if (step > 1) {
+      persist((step - 1) as 1 | 2, draft)
+    }
+  }
+
+  /**
+   * Completion is a two-write transaction. Navigation happens only after both
+   * writes succeed; on failure the screen stays, the draft is untouched, and
+   * the persisted error invites a retry. `submitting` blocks duplicates.
+   */
+  const finish = async (profile: PreferenceProfile) => {
+    if (submitting) {
+      return
+    }
+    setSubmitting(true)
+    const persisted = await completeOnboarding(profile)
+    setSubmitting(false)
+    if (persisted) {
+      router.replace('/(tabs)/discover')
+    }
   }
 
   const skip = () => {
+    if (submitting) {
+      return
+    }
     finish({
       intent: [],
       topics: [],
@@ -63,12 +85,13 @@ export default function OnboardingScreen() {
     ])
   }
 
-  // Android Back edits the prior step; on step one it asks before abandoning
-  // the saved draft instead of silently discarding it.
+  // Android Back edits the prior step — persisting the step together with the
+  // current draft so a kill/relaunch resumes exactly here; on step one it asks
+  // before abandoning the saved draft instead of silently discarding it.
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (step > 1) {
-        setStep((step - 1) as 1 | 2)
+        goBack()
         return true
       }
       confirmSkipFromFirstStep()
@@ -76,7 +99,7 @@ export default function OnboardingScreen() {
     })
     return () => subscription.remove()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step])
+  }, [step, draft])
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -100,9 +123,10 @@ export default function OnboardingScreen() {
         <View style={styles.footer}>
           {step > 1 ? (
             <AppPressable
-              onPress={() => persist((step - 1) as 1 | 2, draft)}
+              onPress={goBack}
               accessibilityRole="button"
               accessibilityLabel="Previous question"
+              disabled={submitting}
               style={styles.backButton}
             >
               <AppText style={styles.backText}>Back</AppText>
@@ -112,9 +136,13 @@ export default function OnboardingScreen() {
             onPress={() => (isLast ? finish(draft) : persist((step + 1) as 2 | 3, draft))}
             accessibilityRole="button"
             accessibilityLabel={isLast ? 'Start exploring' : 'Continue'}
+            accessibilityState={{ disabled: submitting, busy: submitting }}
+            disabled={submitting}
             style={styles.continueButton}
           >
-            <AppText style={styles.continueText}>{isLast ? 'Start exploring' : 'Continue'}</AppText>
+            <AppText style={styles.continueText}>
+              {submitting ? 'Saving…' : isLast ? 'Start exploring' : 'Continue'}
+            </AppText>
           </AppPressable>
         </View>
       </View>

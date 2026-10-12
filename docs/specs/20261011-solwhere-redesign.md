@@ -1,7 +1,7 @@
 ---
 title: Solwhere Redesign — Design System, Discover, Preferences, Onboarding
 date: 2026-10-11
-status: implemented
+status: implemented (automated checks only; on-device validation pending)
 type: feature-spec
 milestone: M1–M3 core redesign
 source: docs/solwhere-redesign-implementation-plan.md
@@ -182,12 +182,25 @@ shared `PreferenceEditor` used by onboarding and Profile.
 source` / disabled `Registration closed`; secondary row Save + Add to calendar.
   Existing HTTPS guard, date/timezone, registration-state, and calendar contracts
   unchanged.
-- Saved: `Upcoming` partition grouped by event-local date label
-  (`Today`, `Tomorrow`, or `Tue, 15 Nov`) ascending, then `Past events` descending;
-  compact cards without recommendation reasons; empty state with `Explore events` CTA.
+- Saved: `Upcoming` partition grouped by the device-timezone date of each start
+  (`Today`, `Tomorrow`, or `Tue, 15 Nov`) ascending, then `Past events` descending.
+  Event timestamps are converted into the device timezone before grouping and
+  labeling — the device-local "today" is never compared against a raw ISO
+  event-local date. Event Details keeps the event's own timezone explicit.
+  Compact cards without recommendation reasons; empty state with `Explore events` CTA.
 - Profile: `Your preferences` card always visible (summary + `Edit preferences` +
   followed-communities count) above an independent `Wallet` section; corrected
   disconnected-wallet copy that never claims personalization.
+- Onboarding completion is a two-write transaction (profile, then the completed
+  marker): navigation to tabs happens only after both persist; on failure the
+  flow stays, the draft is preserved, and a retryable error shows. A profile
+  write without the marker relaunches into onboarding — never a silent
+  completion. Android Back persists the previous step together with the draft.
+- `Personalized` availability requires a nonzero-score match inside the current
+  eligible results (search + filters + location), not merely nonempty profile
+  answers; selecting it alone renders one ranked duplicate-free results list
+  with truthful reasons, and a selection that stops matching renders as
+  inactive rather than misleadingly selected.
 
 ## Non-goals / guards
 
@@ -205,5 +218,8 @@ source` / disabled `Registration closed`; secondary row Save + Add to calendar.
   deduplication, zero-score, tie-breaks.
 - `src/services/__tests__/storage.test.ts` — v2 round-trip, v1 migration, onboarding
   draft parsing, corrupt-input defaults, legacy detection for the launch decision.
-- `src/utils/__tests__/dateGroups.test.ts` — Saved partitions and event-local labels.
+- `src/utils/__tests__/dateGroups.test.ts` — Saved partitions, device-timezone
+  labels, midnight boundaries, and same-instant/different-offset grouping.
+- `src/services/__tests__/storage.test.ts` — onboarding completion rejection
+  and partial-failure relaunch behavior.
 - Existing calendar/wallet/external-link/catalog tests stay green.

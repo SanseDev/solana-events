@@ -1,12 +1,12 @@
 import type { Event } from '../domain/event'
 import { getEventStatus } from './eventStatus'
-import { MONTHS_SHORT, WEEKDAYS_SHORT, toLocalParts } from './dates'
+import { MONTHS_SHORT, WEEKDAYS_SHORT, parseInstant } from './dates'
 
-/** One event-local calendar day inside a Saved partition. */
+/** One device-local calendar day inside a Saved partition. */
 export interface SavedDateGroup {
-  /** Event-local `YYYY-MM-DD`; unique within a partition. */
+  /** Device-timezone `YYYY-MM-DD` of the event start; unique per partition. */
   key: string
-  /** `Today`, `Tomorrow`, or `Tue, 15 Nov` in the event's own timezone. */
+  /** `Today`, `Tomorrow`, or `Tue, 15 Nov` in the device timezone. */
   label: string
   events: Event[]
 }
@@ -22,13 +22,19 @@ interface CalendarDate {
   day: number
 }
 
-function deviceDate(date: Date): CalendarDate {
-  return { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() }
+/**
+ * Device-local calendar date of an event instant. Saved grouping normalizes
+ * every start into the device timezone so `Today`/`Tomorrow` and group keys
+ * come from one consistent calendar; the event's own timezone stays explicit
+ * on Event Details.
+ */
+function deviceDate(instant: Date): CalendarDate {
+  return { year: instant.getFullYear(), month: instant.getMonth() + 1, day: instant.getDate() }
 }
 
-function eventDate(iso: string): CalendarDate {
-  const parts = toLocalParts(iso)
-  return { year: Number(parts.year), month: Number(parts.month), day: Number(parts.day) }
+function dateKey(date: CalendarDate): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.year}-${pad(date.month)}-${pad(date.day)}`
 }
 
 function sameDate(a: CalendarDate, b: CalendarDate): boolean {
@@ -36,38 +42,37 @@ function sameDate(a: CalendarDate, b: CalendarDate): boolean {
 }
 
 function addDays(date: CalendarDate, days: number): CalendarDate {
-  const shifted = new Date(date.year, date.month - 1, date.day + days)
-  return deviceDate(shifted)
+  return deviceDate(new Date(date.year, date.month - 1, date.day + days))
 }
 
-/** Weekday of an event-local date, computed without timezone conversion. */
+/** Weekday of a calendar date, computed without timezone conversion. */
 function weekdayLabel(date: CalendarDate): string {
   return WEEKDAYS_SHORT[new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay()]
 }
 
 /**
- * Saved group label for an event's start date. `Today`/`Tomorrow` compare the
- * event-local date against the device calendar of `now`; other dates render as
- * `Tue, 15 Nov` using the event's own timezone.
+ * Saved group label for an event start in the device timezone: `Today` or
+ * `Tomorrow` when the device-local start date is `now`'s (or the next)
+ * device calendar day, otherwise `Tue, 15 Nov`.
  */
 export function eventDateLabel(iso: string, now: Date): string {
-  const event = eventDate(iso)
+  const start = deviceDate(new Date(parseInstant(iso)))
   const today = deviceDate(now)
-  if (sameDate(event, today)) {
+  if (sameDate(start, today)) {
     return 'Today'
   }
-  if (sameDate(event, addDays(today, 1))) {
+  if (sameDate(start, addDays(today, 1))) {
     return 'Tomorrow'
   }
-  return `${weekdayLabel(event)}, ${event.day} ${MONTHS_SHORT[event.month - 1]}`
+  return `${weekdayLabel(start)}, ${start.day} ${MONTHS_SHORT[start.month - 1]}`
 }
 
-function groupByStartDate(events: readonly Event[], now: Date): SavedDateGroup[] {
+function groupByDeviceDate(events: readonly Event[], now: Date): SavedDateGroup[] {
   const groups: SavedDateGroup[] = []
   const byKey = new Map<string, SavedDateGroup>()
   for (const event of events) {
-    const parts = toLocalParts(event.startAt)
-    const key = `${parts.year}-${parts.month}-${parts.day}`
+    const start = deviceDate(new Date(parseInstant(event.startAt)))
+    const key = dateKey(start)
     let group = byKey.get(key)
     if (!group) {
       group = { key, label: eventDateLabel(event.startAt, now), events: [] }
@@ -81,8 +86,8 @@ function groupByStartDate(events: readonly Event[], now: Date): SavedDateGroup[]
 
 /**
  * Partitions saved events into `Upcoming` (not ended, start ascending, grouped
- * by event-local start date) and `Past events` (ended, most recent end first,
- * grouped by start date). Pure: input order is never mutated.
+ * by device-timezone start date) and `Past events` (ended, most recent end
+ * first, grouped by start date). Pure: input order is never mutated.
  */
 export function groupSavedEvents(events: readonly Event[], now: Date): SavedPartitions {
   const upcomingEvents = events
@@ -93,5 +98,5 @@ export function groupSavedEvents(events: readonly Event[], now: Date): SavedPart
     .filter((event) => getEventStatus(event, now) === 'ended')
     .slice()
     .sort((a, b) => Date.parse(b.endAt) - Date.parse(a.endAt))
-  return { upcoming: groupByStartDate(upcomingEvents, now), past: groupByStartDate(pastEvents, now) }
+  return { upcoming: groupByDeviceDate(upcomingEvents, now), past: groupByDeviceDate(pastEvents, now) }
 }

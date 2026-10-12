@@ -12,7 +12,7 @@ The catalog ships inside the app: every event is researched and verified against
 - Skippable three-step onboarding seeding an optional preference profile (intent, topics, participation, location).
 - Truthful personalization: `Matched for you` cards only appear when a persisted choice actually matches, with the reason shown.
 - Event detail with timezone-safe dates, 16:9 editorial cover, and a persistent bottom action bar (Register / View official source, Save, Add to calendar).
-- Saved events persisted locally, grouped by event-local date (`Today`, `Tomorrow`, `Tue, 15 Nov`), upcoming then past.
+- Saved events persisted locally, grouped by device-timezone date (`Today`, `Tomorrow`, `Tue, 15 Nov`), upcoming then past; event details keep the event's own timezone.
 - Wallet connection via Mobile Wallet Adapter: authorization only — connect, show public address, copy, disconnect. Preferences are never gated behind it.
 
 ## P1 scope
@@ -38,7 +38,7 @@ The catalog ships inside the app: every event is researched and verified against
 - **Discover** upcoming verified events with dates in the event's own timezone: a featured `Coming up` card, up to two truthfully-reasoned `Matched for you` picks, and the chronological remainder — no duplicates.
 - **Search and filter** by topic, format, attendance mode, this-week, and catalog location — locally, instantly.
 - **Onboard in three optional steps** (intent, topics, participation + location) that rank Discover; Skip works at any time and the draft resumes after a kill.
-- **Save events** persistently, grouped by event-local date in Saved (upcoming ascending, past descending).
+- **Save events** persistently, grouped by device-timezone date in Saved (upcoming ascending, past descending).
 - **Add to calendar** on Android from Event Details (P1).
 - **Wallet connect** via Mobile Wallet Adapter (view address only); local preferences never require it.
 
@@ -128,25 +128,25 @@ Typecheck, lint, and unit tests must all pass before every commit; `npm run ci` 
 | Android prebuild (`expo prebuild -p android`)  | command    | passing |
 | Domain logic (filters, ranking, status)        | unit tests | passing |
 | Date formatting (timezone-safe)                | unit tests | passing |
-| Saved date grouping (event-local labels)       | unit tests | passing |
+| Saved date grouping (device-timezone labels)   | unit tests | passing |
 | Storage (favorites, preferences, onboarding)   | unit tests | passing |
 | External links (https-only)                    | unit tests | passing |
 | Calendar service (P1 add-to-calendar)          | unit tests | passing |
-| Catalog integrity (141 tests total, 12 suites) | unit tests | passing |
+| Catalog integrity (147 tests total, 12 suites) | unit tests | passing |
 | Wallet service safety guards                   | unit tests | passing |
 | Seeker device validation                       | manual     | pending |
 | Standard Android device                        | manual     | pending |
 | EAS APK build                                  | manual     | pending |
 | Demo video / pitch deck                        | manual     | pending |
 
-Automated results above were produced by the commands in this README on 2026-10-11. Manual items are **not yet done**: they require the release-candidate APK on real hardware (standard Android and Seeker) and have not been run — no hardware test, APK build, video, or deck exists yet. Remaining blockers: EAS login for the cloud build (or a local `eas build --local` with the Android SDK), then on-device validation.
+Automated results above were produced by the commands in this README on 2026-10-11. The redesign (onboarding, personalized Discover, Saved grouping, Details action bar) is covered by these automated checks only — it has **not** been validated on a physical device. Manual items are **not yet done**: they require the release-candidate APK on real hardware (standard Android and Seeker) and have not been run — no hardware test, APK build, video, or deck exists yet. Remaining blockers: EAS login for the cloud build (or a local `eas build --local` with the Android SDK), then on-device validation.
 
 ## Release status and submission checklist
 
 | Item                                                  | Status                                                      |
 | ----------------------------------------------------- | ----------------------------------------------------------- |
 | Android package ID                                    | done — `com.sansedev.solwhere`                              |
-| Automated checks (typecheck, lint, format, 141 tests) | done — 2026-10-11                                           |
+| Automated checks (typecheck, lint, format, 147 tests) | done — 2026-10-11                                           |
 | Android prebuild with final package ID                | done — native files regenerated 2026-10-08                  |
 | EAS APK cloud build                                   | pending — command above; requires `eas-cli` login           |
 | Standard Android device validation                    | pending — checklist in `docs/release-validation.md`         |

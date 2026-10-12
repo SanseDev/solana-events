@@ -4,6 +4,7 @@ import {
   loadFavorites,
   loadOnboarding,
   loadPreferences,
+  persistOnboardingCompletion,
   saveFavorites,
   saveOnboarding,
   savePreferences,
@@ -13,12 +14,17 @@ import type { PreferenceProfile } from '../../domain/event'
 
 jest.mock('@react-native-async-storage/async-storage', () => {
   const store = new Map<string, string>()
+  const failKeys = new Set<string>()
   return {
     __esModule: true,
     __store: store,
+    __failKeys: failKeys,
     default: {
       getItem: async (key: string) => store.get(key) ?? null,
       setItem: async (key: string, value: string) => {
+        if (failKeys.has(key)) {
+          throw new Error(`simulated write failure for ${key}`)
+        }
         store.set(key, value)
       },
     },
@@ -27,6 +33,7 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 
 beforeEach(() => {
   mockModule().__store.clear()
+  mockModule().__failKeys.clear()
 })
 
 function mockModule() {
@@ -154,6 +161,39 @@ describe('onboarding storage', () => {
   it('degrades corrupt state to fresh defaults', async () => {
     await mockStorage().setItem(STORAGE_KEYS.onboarding, '{oops')
     expect(await loadOnboarding()).toEqual({ completed: false, step: 1, draft: emptyProfile })
+  })
+})
+
+describe('onboarding completion persistence', () => {
+  it('persists the profile and then the completed marker', async () => {
+    const profile: PreferenceProfile = { ...emptyProfile, topics: ['defi' as const] }
+    await persistOnboardingCompletion(profile)
+    expect(JSON.parse((await mockStorage().getItem(STORAGE_KEYS.preferences)) ?? 'null')).toEqual(profile)
+    expect(JSON.parse((await mockStorage().getItem(STORAGE_KEYS.onboarding)) ?? 'null')).toEqual({
+      completed: true,
+      step: 3,
+      draft: profile,
+    })
+  })
+
+  it('rejects and writes no completed marker when the profile write fails', async () => {
+    mockModule().__failKeys.add(STORAGE_KEYS.preferences)
+    await expect(persistOnboardingCompletion({ ...emptyProfile, topics: ['defi' as const] })).rejects.toThrow(
+      'simulated write failure',
+    )
+    expect(await mockStorage().getItem(STORAGE_KEYS.preferences)).toBeNull()
+    expect(await mockStorage().getItem(STORAGE_KEYS.onboarding)).toBeNull()
+    expect((await loadOnboarding()).completed).toBe(false)
+  })
+
+  it('stays resumable when the marker write fails after the profile saved', async () => {
+    mockModule().__failKeys.add(STORAGE_KEYS.onboarding)
+    const profile: PreferenceProfile = { ...emptyProfile, topics: ['defi' as const] }
+    await expect(persistOnboardingCompletion(profile)).rejects.toThrow('simulated write failure')
+    // Partial state: the profile exists, but relaunch must resume onboarding
+    // rather than treat the session as completed.
+    expect(await loadPreferences()).toEqual(profile)
+    expect((await loadOnboarding()).completed).toBe(false)
   })
 })
 
