@@ -79,6 +79,14 @@ Description: Metro platform extensions resolve the import. Web renders no button
 - `npm test` — new suite `src/services/__tests__/calendar.test.ts` covers: payload mapping (epochs, `allDay`, location fallback, notes with official URL), permission denial, unreadable/empty calendar list, primary-calendar preference, first-writable fallback, unexpected write failure, web stub, and a source-safety guard that no screen imports `expo-calendar` directly. Full suite green.
 - Native runtime behavior (permission dialog, real calendar write, denial fallback) requires a rebuilt dev client or APK on hardware — recorded as manual items in `README.md`.
 
+## Runtime fix: missing native module `CalendarNext`
+
+Symptom: `Error: Cannot find native module 'CalendarNext'` from `expo-calendar` on a dev client, even though the JS package is installed and `expo-doctor` passes.
+
+Root cause: the installed dev-client binary was built before `expo-calendar` existed in `node_modules`; Expo autolinking only embeds a module when the native binary is compiled. Metro reload can never fix a missing native module.
+
+Fix (2026-10-08): `npx expo install expo-calendar` (confirmed `57.0.5` aligned with SDK 57, no version drift), then rebuild and reinstall the binary — `npx expo run:android` (or `run:ios`; `expo prebuild --clean` only if the `android`/`ios` project itself is stale — here the manifest already carried the plugin's `READ/WRITE_CALENDAR` permissions, so it was not needed). Restart with `npx expo start --clear`. EAS development builds require a new build for the same reason. No runtime try/catch or dynamic import may be used to mask the error; `calendar.web.ts` stays untouched.
+
 ## Files
 
 - `src/services/calendar.ts` (new) — result contract, pure `buildCalendarDetails` mapper, `addEventToCalendar`.
