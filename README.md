@@ -87,8 +87,12 @@ The app never asks for a recovery phrase, never requests balances, and never ini
 ## Tests
 
 ```bash
+npm run typecheck
+npm run lint:check
 npm test
 ```
+
+Typecheck, lint, and unit tests must all pass before every commit; `npm run ci` additionally runs the Android prebuild.
 
 | Area                                    | Coverage      | Status  |
 | --------------------------------------- | ------------- | ------- |
