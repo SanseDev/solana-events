@@ -38,7 +38,7 @@ function preferenceSummaryLines(profile: PreferenceProfile): [string, string] {
  */
 export default function ProfileScreen() {
   const session = useWalletSession()
-  const { profile } = usePreferences()
+  const { profile, reviewOnboarding } = usePreferences()
   const [summaryLine1, summaryLine2] = preferenceSummaryLines(profile)
   const followed = profile.communityIds
     .map((id) => COMMUNITIES_BY_ID.get(id)?.name)
@@ -83,6 +83,22 @@ export default function ProfileScreen() {
           <SectionHeader title="Wallet" />
           <WalletStatusCard session={session} />
         </View>
+        {__DEV__ ? (
+          <View style={styles.developmentSection}>
+            <SectionHeader title="Développement" />
+            <AppPressable
+              onPress={() => {
+                reviewOnboarding(profile)
+                router.push('/onboarding')
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Revoir l’onboarding"
+              style={styles.reviewOnboardingButton}
+            >
+              <AppText style={styles.reviewOnboardingText}>Revoir l’onboarding</AppText>
+            </AppPressable>
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   )
@@ -143,5 +159,22 @@ const styles = StyleSheet.create({
   },
   walletSection: {
     gap: spacing.md,
+  },
+  developmentSection: {
+    gap: spacing.md,
+  },
+  reviewOnboardingButton: {
+    minHeight: touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.warning,
+  },
+  reviewOnboardingText: {
+    color: colors.warning,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
   },
 })

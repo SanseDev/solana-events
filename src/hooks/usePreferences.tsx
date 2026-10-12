@@ -24,6 +24,8 @@ interface PreferencesState {
   setProfile: (profile: PreferenceProfile) => void
   /** Persists draft + step so kill/relaunch resumes in place. */
   saveOnboardingDraft: (step: 1 | 2 | 3, draft: PreferenceProfile) => void
+  /** Development-only entry point: restarts the review flow from current preferences. */
+  reviewOnboarding: (profile: PreferenceProfile) => void
   /**
    * Persists profile then the completed marker, and only flips the in-memory
    * `onboardingCompleted` after both writes succeed. Resolves false on
@@ -95,6 +97,17 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
     })
   }, [])
 
+  const reviewOnboarding = useCallback((currentProfile: PreferenceProfile) => {
+    setPersistError(null)
+    setOnboarding((current) => {
+      // Keep completion true: this is a direct review route, not a first-run
+      // reset. Favorites and wallet state live in separate providers/keys.
+      const next: OnboardingState = { ...current, completed: true, step: 1, draft: currentProfile }
+      saveOnboarding(next).catch(() => setPersistError(PERSIST_ERROR))
+      return next
+    })
+  }, [])
+
   const completeOnboarding = useCallback(async (finalProfile: PreferenceProfile) => {
     setPersistError(null)
     try {
@@ -121,9 +134,19 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
       onboardingDraft: onboarding.draft,
       setProfile: persistProfile,
       saveOnboardingDraft,
+      reviewOnboarding,
       completeOnboarding,
     }),
-    [profile, hydrated, persistError, onboarding, persistProfile, saveOnboardingDraft, completeOnboarding],
+    [
+      profile,
+      hydrated,
+      persistError,
+      onboarding,
+      persistProfile,
+      saveOnboardingDraft,
+      reviewOnboarding,
+      completeOnboarding,
+    ],
   )
 
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>
