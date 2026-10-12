@@ -1,4 +1,4 @@
-import type { AttendanceMode, Event, EventFormat, LocationPreference, Topic } from './event'
+import type { AttendanceMode, Event, EventFormat, LocationPreference, PreferenceProfile, Topic } from './event'
 
 export type DateRangeFilter = 'any' | 'this_week'
 
@@ -85,6 +85,25 @@ export function applyFilters(events: readonly Event[], query: string, filters: E
     }
     return true
   })
+}
+
+/**
+ * Default Discover constraints seeded from a completed profile:
+ * location filters exactly; participation maps to an attendance set
+ * (`online` → online+hybrid, `in_person` → in-person+hybrid, `both` → any).
+ */
+export function defaultFiltersForProfile(profile: PreferenceProfile): EventFilters {
+  const attendance: AttendanceMode[] =
+    profile.participation === 'online'
+      ? ['online', 'hybrid']
+      : profile.participation === 'in_person'
+        ? ['in_person', 'hybrid']
+        : []
+  return {
+    ...emptyFilters,
+    attendance,
+    location: profile.location,
+  }
 }
 
 /** Distinct catalog `city, country` pairs, alphabetically sorted. */

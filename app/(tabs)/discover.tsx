@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -16,10 +16,10 @@ import { IconButton } from '@/src/components/ui/IconButton'
 import { getAllEvents, getUpcomingEvents } from '@/src/data/eventCatalog'
 import { useEventFilters } from '@/src/hooks/useEventFilters'
 import { useFavorites } from '@/src/hooks/useFavorites'
-import { useInterests } from '@/src/hooks/useInterests'
-import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS, type PreferenceProfile } from '@/src/domain/event'
-import { hasActiveFilters, locationLabel, type EventFilters } from '@/src/domain/filters'
-import { emptyProfile, hasPersonalization, recommendEvents } from '@/src/utils/ranking'
+import { usePreferences } from '@/src/hooks/usePreferences'
+import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS } from '@/src/domain/event'
+import { defaultFiltersForProfile, hasActiveFilters, locationLabel, type EventFilters } from '@/src/domain/filters'
+import { hasPersonalization, recommendEvents } from '@/src/utils/ranking'
 import { colors, radius, screenPadding, sectionGap, spacing, touchTarget, typography } from '@/src/theme'
 
 export default function DiscoverScreen() {
@@ -31,13 +31,18 @@ export default function DiscoverScreen() {
   const [locationSheetVisible, setLocationSheetVisible] = useState(false)
   const [personalized, setPersonalized] = useState(false)
   const { isFavorite, toggleFavorite, hydrated, persistError } = useFavorites()
-  const interests = useInterests()
+  const { profile, hydrated: preferencesHydrated } = usePreferences()
 
-  // M1: topic/community interests only; M2 swaps in the full preference profile.
-  const profile = useMemo<PreferenceProfile>(
-    () => ({ ...emptyProfile, topics: interests.topics, communityIds: interests.communityIds }),
-    [interests.topics, interests.communityIds],
-  )
+  // A completed profile seeds default constraints (participation + location)
+  // exactly once; afterwards the filter state is purely user-owned.
+  const seeded = useRef(false)
+  useEffect(() => {
+    if (preferencesHydrated && !seeded.current) {
+      seeded.current = true
+      setFilters(defaultFiltersForProfile(profile))
+    }
+  }, [preferencesHydrated, profile, setFilters])
+
   const canPersonalize = hasPersonalization(profile)
 
   const filtering = query.length > 0 || hasActiveFilters(filters)

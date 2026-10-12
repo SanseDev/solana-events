@@ -1,5 +1,6 @@
 import { makeFixtureEvent } from '../event-fixture'
-import { applyFilters, emptyFilters, hasActiveFilters, thisWeekWindow } from '../filters'
+import { emptyProfile } from '../../utils/ranking'
+import { applyFilters, defaultFiltersForProfile, emptyFilters, hasActiveFilters, thisWeekWindow } from '../filters'
 
 describe('hasActiveFilters', () => {
   it('is false for empty filters', () => {
@@ -194,6 +195,31 @@ describe('applyFilters', () => {
 
   it('returns empty array when nothing matches', () => {
     expect(applyFilters(events, 'nope', emptyFilters)).toEqual([])
+  })
+})
+
+describe('defaultFiltersForProfile', () => {
+  it('returns empty filters for a neutral profile', () => {
+    expect(defaultFiltersForProfile(emptyProfile)).toEqual(emptyFilters)
+  })
+
+  it('seeds the location constraint from the profile', () => {
+    const filters = defaultFiltersForProfile({
+      ...emptyProfile,
+      location: { city: 'London', country: 'United Kingdom' },
+    })
+    expect(filters.location).toEqual({ city: 'London', country: 'United Kingdom' })
+    expect(hasActiveFilters(filters)).toBe(false)
+  })
+
+  it('maps online participation to online + hybrid attendance', () => {
+    const filters = defaultFiltersForProfile({ ...emptyProfile, participation: 'online' })
+    expect(filters.attendance).toEqual(['online', 'hybrid'])
+  })
+
+  it('maps in-person participation to in-person + hybrid attendance', () => {
+    const filters = defaultFiltersForProfile({ ...emptyProfile, participation: 'in_person' })
+    expect(filters.attendance).toEqual(['in_person', 'hybrid'])
   })
 })
 

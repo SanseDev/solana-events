@@ -1,6 +1,6 @@
 import { type PropsWithChildren } from 'react'
 import { FavoritesProvider } from '@/src/hooks/useFavorites'
-import { InterestsProvider } from '@/src/hooks/useInterests'
+import { PreferencesProvider } from '@/src/hooks/usePreferences'
 
 /**
  * Web provider stack. Deliberately omits MobileWalletProvider: MWA is a
@@ -10,7 +10,7 @@ import { InterestsProvider } from '@/src/hooks/useInterests'
 export function AppProviders({ children }: PropsWithChildren) {
   return (
     <FavoritesProvider>
-      <InterestsProvider>{children}</InterestsProvider>
+      <PreferencesProvider>{children}</PreferencesProvider>
     </FavoritesProvider>
   )
 }

@@ -2,7 +2,7 @@ import { type PropsWithChildren } from 'react'
 import { MobileWalletProvider } from '@wallet-ui/react-native-web3js'
 import { AppConfig } from '@/constants/app-config'
 import { FavoritesProvider } from '@/src/hooks/useFavorites'
-import { InterestsProvider } from '@/src/hooks/useInterests'
+import { PreferencesProvider } from '@/src/hooks/usePreferences'
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
@@ -12,7 +12,7 @@ export function AppProviders({ children }: PropsWithChildren) {
       identity={{ name: AppConfig.name, uri: AppConfig.uri }}
     >
       <FavoritesProvider>
-        <InterestsProvider>{children}</InterestsProvider>
+        <PreferencesProvider>{children}</PreferencesProvider>
       </FavoritesProvider>
     </MobileWalletProvider>
   )

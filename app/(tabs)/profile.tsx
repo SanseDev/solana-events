@@ -6,13 +6,13 @@ import { AppText } from '@/components/app-text'
 import { SectionHeader } from '@/src/components/SectionHeader'
 import { WalletStatusCard } from '@/src/components/WalletStatusCard'
 import { COMMUNITIES } from '@/src/data/communities'
-import { useInterests } from '@/src/hooks/useInterests'
+import { usePreferences } from '@/src/hooks/usePreferences'
 import { useWalletSession } from '@/src/services/wallet'
 import { colors, radius, spacing } from '@/src/theme'
 
 export default function ProfileScreen() {
   const session = useWalletSession()
-  const interests = useInterests()
+  const interests = usePreferences().profile
   // Interests are stored locally and never require a wallet; on web the
   // session is `unsupported`, so keep the section visible there too.
   const connected = session.status === 'connected' || session.status === 'unsupported'
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
               </View>
             </View>
             <Pressable
-              onPress={() => router.push('/interests')}
+              onPress={() => router.push('/preferences')}
               accessibilityRole="button"
               accessibilityLabel="Manage interests"
               style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}

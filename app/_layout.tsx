@@ -6,8 +6,39 @@ import { AppProviders } from '@/components/app-providers'
 import { useCallback } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { View } from 'react-native'
+import { usePreferences } from '@/src/hooks/usePreferences'
 
 SplashScreen.preventAutoHideAsync()
+
+/**
+ * Root navigation. Preference hydration completes before onboarding versus
+ * tabs is chosen, so returning users never flash Discover and fresh users
+ * never land in tabs first.
+ */
+function RootNavigator() {
+  const { hydrated, onboardingCompleted } = usePreferences()
+
+  if (!hydrated) {
+    return null
+  }
+
+  if (!onboardingCompleted) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding" />
+      </Stack>
+    )
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="event/[id]" />
+      <Stack.Screen name="preferences" />
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  )
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -28,12 +59,7 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <AppProviders>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="event/[id]" />
-          <Stack.Screen name="interests" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+        <RootNavigator />
         <StatusBar style="light" />
       </AppProviders>
     </View>
