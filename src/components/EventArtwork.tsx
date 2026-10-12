@@ -2,27 +2,39 @@ import React, { useState } from 'react'
 import { Image } from 'expo-image'
 import { StyleSheet, View, type ImageStyle } from 'react-native'
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg'
-import { getEventImage, shouldRenderEventImage } from '@/src/data/eventImages'
+import { getEventImage, preferredContentFit, shouldRenderEventImage } from '@/src/data/eventImages'
 import type { Event } from '../domain/event'
 import { colors, radius } from '../theme'
 import { getEventArtworkConfig, type EventArtworkConfig } from './eventArtworkConfig'
+
+/** Must mirror the aspect ratios in variantStyles below. */
+const VARIANT_ASPECT: Record<'feature' | 'thumb' | 'cover', number> = {
+  feature: 16 / 9,
+  thumb: 84 / 63,
+  cover: 16 / 9,
+}
 
 /**
  * Verified local assets come from a static Metro registry. Missing or failed
  * assets use deterministic, format-aware SVG illustrations with no text.
  */
 export function EventArtwork({ event, variant }: { event: Event; variant: 'feature' | 'thumb' | 'cover' }) {
-  const [failedImageId, setFailedImageId] = useState<string | null>(null)
+  // Keyed by asset module, not event id: a late error from a previous artwork
+  // must not suppress the next one the component renders.
+  const [failedSource, setFailedSource] = useState<number | null>(null)
   const image = getEventImage(event.id)
+  const loadFailed = image !== undefined && failedSource === image.source
 
-  if (shouldRenderEventImage(image, failedImageId === event.id)) {
+  if (shouldRenderEventImage(image, loadFailed)) {
+    const contentFit = preferredContentFit(image.aspect, VARIANT_ASPECT[variant])
     return (
       <Image
+        key={image.source}
         source={image.source}
-        contentFit="cover"
+        contentFit={contentFit}
         accessibilityLabel={`${event.title} artwork`}
-        onError={() => setFailedImageId(event.id)}
-        style={[styles.block, variantStyles[variant]]}
+        onError={() => setFailedSource(image.source)}
+        style={[styles.block, contentFit === 'contain' && styles.containBackground, variantStyles[variant]]}
       />
     )
   }
@@ -185,6 +197,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
     overflow: 'hidden',
+  },
+  containBackground: {
+    backgroundColor: colors.canvasRaised,
   },
 })
 
