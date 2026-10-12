@@ -2,7 +2,31 @@
 
 Offline-first calendar of verified Solana ecosystem events, built for Android and the Solana Mobile Seeker. Created for the Solana Mobile **CLOCK IN** hackathon (2026).
 
+Repository: <https://github.com/SanseDev/solana-events>
+
 The catalog ships inside the app: every event is researched and verified against its official source before release. No network permission, no tracking, no accounts. Connect a wallet via Mobile Wallet Adapter to identify yourself — nothing else.
+
+## P0 scope (exactly what ships)
+
+- Discover, search, and filter the verified local catalog (topic, format, attendance mode).
+- Event detail with timezone-safe dates, official source, and registration link.
+- Saved events persisted locally across restarts.
+- Manual interest preferences with light `For you` ranking.
+- Wallet connection via Mobile Wallet Adapter: authorization only — connect, show public address, copy, disconnect.
+
+## Scope limits (by design)
+
+- No balance, no transactions, no signing, no push, no accounts, no backend, no auth, no database.
+- The wallet flow is authorization-only: it calls MWA `connect()` and never `signIn()`, never requests a message or transaction signature, and never performs an RPC read.
+- Catalog updates ship with app releases — it is a verified snapshot, not a feed.
+- Registration always happens on the official organizer page; this app links out to `https` sources only.
+- Out of P0 scope (not built): add-to-calendar, NFT/collection detection, any backend or payments.
+
+## Future work
+
+- Catalog API to refresh events without an app release.
+- Improved calendar integration (P1 of the implementation plan).
+- Opt-in collection-based community suggestions using verified collection IDs. Not implemented — the app does not read NFT data and never claims to.
 
 ## What it does
 
@@ -11,12 +35,6 @@ The catalog ships inside the app: every event is researched and verified against
 - **Save events** persistently and keep them across restarts.
 - **For you** ranking from your interest topics and communities.
 - **Wallet connect** via Mobile Wallet Adapter (view address only).
-
-## Scope limits (by design)
-
-- No balance, no transactions, no signing, no push, no accounts.
-- Catalog updates ship with app releases — it is a verified snapshot, not a feed.
-- Registration always happens on the official organizer page; this app links out to `https` sources only.
 
 ## Architecture
 
@@ -78,7 +96,7 @@ The `preview` profile in `eas.json` sets `android.buildType: "apk"`, producing a
 | IslandDAO v5                 | IslandDAO/Superteam BR | luma.com/6laijuyn            |
 | solanaStartupConnectGH       | Ghana Solana builders  | luma.com/nx9ps6ud            |
 
-Each event records `lastVerifiedAt`; the detail screen shows "Details verified on {date}".
+Each event records `lastVerifiedAt`; all six events and every registration URL were re-verified against these pages on **2026-10-08**. The detail screen shows "Details verified on {date}".
 
 ## Wallet security
 
@@ -94,15 +112,20 @@ npm test
 
 Typecheck, lint, and unit tests must all pass before every commit; `npm run ci` additionally runs the Android prebuild.
 
-| Area                                    | Coverage      | Status  |
-| --------------------------------------- | ------------- | ------- |
-| Domain logic (filters, ranking, status) | 61 unit tests | passing |
-| Date formatting (timezone-safe)         | unit tests    | passing |
-| Storage (favorites, interests)          | unit tests    | passing |
-| External links (https-only)             | unit tests    | passing |
-| Catalog integrity                       | unit tests    | passing |
-| Seeker device validation                | manual        | pending |
-| Standard Android device                 | manual        | pending |
-| EAS APK build                           | manual        | pending |
+| Area                                          | Coverage   | Status  |
+| --------------------------------------------- | ---------- | ------- |
+| Typecheck (`tsc --noEmit`)                    | command    | passing |
+| Lint (`expo lint`)                            | command    | passing |
+| Android prebuild (`expo prebuild -p android`) | command    | passing |
+| Domain logic (filters, ranking, status)       | unit tests | passing |
+| Date formatting (timezone-safe)               | unit tests | passing |
+| Storage (favorites, interests)                | unit tests | passing |
+| External links (https-only)                   | unit tests | passing |
+| Catalog integrity (80 tests total, 8 suites)  | unit tests | passing |
+| Wallet service safety guards                  | unit tests | passing |
+| Seeker device validation                      | manual     | pending |
+| Standard Android device                       | manual     | pending |
+| EAS APK build                                 | manual     | pending |
+| Demo video / pitch deck                       | manual     | pending |
 
-Manual items run against the release candidate APK on real hardware before submission.
+Automated results above were produced by the commands in this README on 2026-10-08. Manual items are **not yet done**: they require the release-candidate APK on real hardware (standard Android and Seeker) and have not been run — no hardware test, APK build, video, or deck exists yet. Blockers: final Android package ID (owner decision; cannot change after release) and EAS login for the cloud build, or a local `eas build --local` with the Android SDK.

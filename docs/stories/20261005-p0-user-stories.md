@@ -46,6 +46,7 @@ type: user-stories
 
 - Acceptance: connect/disconnect/cancel/error states; truncated address + copy; catalog fully usable when disconnected or when wallet errors; no balance, no signing, no transactions; security note about recovery phrase.
 - Implemented in: `src/services/wallet.ts`, `src/components/WalletStatusCard.tsx`, `app/(tabs)/profile.tsx`.
+- Hardened 2026-10-08: connection is authorization-only — `useMobileWallet().connect()`, never `signIn()` or any signature/RPC operation (guarded by `src/services/__tests__/wallet.test.ts`). See `docs/specs/20261008-p0-hardening.md`.
 
 ## Platform availability (2026-10-06)
 
