@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { AppText } from '@/components/app-text'
@@ -23,30 +23,38 @@ export function EventCard({
 }) {
   const { month, day } = formatDateBlock(event.startAt)
   const ended = getEventStatus(event, now) === 'ended'
+  // The card is a plain View with two sibling Pressables (open + save).
+  // Nesting the save Pressable inside the open Pressable would render a
+  // <button> inside a <button> on react-native-web, which is invalid HTML.
+  const [pressed, setPressed] = useState(false)
   return (
-    <Pressable
-      onPress={() => onOpen(event.id)}
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${event.title}`}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-    >
-      <View style={styles.dateBlock}>
-        <AppText style={styles.dateMonth}>{month}</AppText>
-        <AppText style={styles.dateDay}>{day}</AppText>
-      </View>
-      <View style={styles.body}>
-        <AppText style={styles.title} numberOfLines={2}>
-          {event.title}
-        </AppText>
-        <EventMetaRow event={event} />
-        {ended ? <AppText style={styles.ended}>Ended</AppText> : null}
-      </View>
+    <View style={[styles.card, pressed && styles.cardPressed]}>
+      <Pressable
+        onPress={() => onOpen(event.id)}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${event.title}`}
+        style={styles.openTarget}
+      >
+        <View style={styles.dateBlock}>
+          <AppText style={styles.dateMonth}>{month}</AppText>
+          <AppText style={styles.dateDay}>{day}</AppText>
+        </View>
+        <View style={styles.body}>
+          <AppText style={styles.title} numberOfLines={2}>
+            {event.title}
+          </AppText>
+          <EventMetaRow event={event} />
+          {ended ? <AppText style={styles.ended}>Ended</AppText> : null}
+        </View>
+      </Pressable>
       <Pressable
         onPress={() => onSave(event.id)}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel={saved ? `Unsave ${event.title}` : `Save ${event.title}`}
-        style={({ pressed }) => [styles.saveButton, pressed && styles.savePressed]}
+        style={({ pressed: savePressed }) => [styles.saveButton, savePressed && styles.savePressed]}
       >
         <MaterialIcons
           name={saved ? 'bookmark' : 'bookmark-border'}
@@ -54,7 +62,7 @@ export function EventCard({
           color={saved ? colors.accent : colors.textSecondary}
         />
       </Pressable>
-    </Pressable>
+    </View>
   )
 }
 
@@ -93,6 +101,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     lineHeight: 24,
+  },
+  openTarget: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   body: {
     flex: 1,

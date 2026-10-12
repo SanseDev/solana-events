@@ -91,4 +91,5 @@ Description: Native flow unchanged. Web flow renders an informational card — n
 - `src/components/WalletStatusCard.tsx` — unsupported branch
 - `app/(tabs)/profile.tsx` — interests gate includes `unsupported`
 - `app/interests.tsx` — web-safe reset path
+- `src/components/EventCard.tsx` — open/save targets are sibling Pressables inside a plain card View; nesting them rendered `<button>` inside `<button>` on web (invalid HTML, hydration error)
 - `package.json` / `package-lock.json` — `react-dom`, `react-native-web`
