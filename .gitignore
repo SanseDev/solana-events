@@ -46,3 +46,5 @@ app-example
 # IA
 .agents/
 .claude/
+*storybook.log
+storybook-static

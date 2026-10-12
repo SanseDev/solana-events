@@ -191,6 +191,54 @@ source` / disabled `Registration closed`; secondary row Save + Add to calendar.
 - Profile: `Your preferences` card always visible (summary + `Edit preferences` +
   followed-communities count) above an independent `Wallet` section; corrected
   disconnected-wallet copy that never claims personalization.
+
+### Event-details action dock refinement (2026-10-12)
+
+The event-details actions use a fixed bottom dock. It makes registration visually
+primary without hiding save or calendar actions behind icon-only affordances:
+
+- The primary action is a full-width, 52 dp accent button. Its existing label and
+  behavior stay unchanged: `Register`, `View official source`, or disabled
+  `Registration closed`.
+- Save and calendar are two 48 dp minimum outlined buttons with both an icon and
+  text label. Save becomes an accent-tinted selected control. Calendar exposes its
+  existing idle, adding, and added states. It remains absent where the existing
+  platform/status policy makes it unavailable.
+- At 360 dp and normal text size, all actions use one compact row: flexible primary
+  button followed by two equally sized secondary buttons. Below 360 dp or above 115%
+  text scale, the dock places the primary button above the secondary row. No label is
+  truncated or reduced to fit.
+- The dock uses `canvasRaised`, one `borderSubtle` top edge, and no elevation or
+  shadow. It consumes the Android bottom safe-area inset and remains in normal flex
+  layout below the scroll view, so content cannot be obscured.
+- Every control has an explicit accessibility label, selected/disabled/busy state,
+  and at least a 48×48 dp target.
+
+```mermaid
+flowchart TB
+  Detail[Scrollable event details] --> Dock[Persistent action dock]
+  Dock --> Primary[Primary CTA\nRegister / Source / Closed]
+  Dock --> Save[Save button\nicon + label]
+  Dock --> Calendar[Calendar button\nicon + label]
+  Primary --> External[Existing HTTPS external-link handler]
+  Save --> Favorites[Existing favorites persistence]
+  Calendar --> NativeCalendar[Existing Android calendar handler]
+```
+
+The diagram shows ownership boundaries: the dock owns layout and visual state only.
+Existing link validation, favorite persistence, and native calendar error handling
+remain outside it.
+
+```mermaid
+flowchart LR
+  Size{Width >= 360 dp\nand font scale <= 1.15?}
+  Size -->|Yes| Row[Primary + Save + Calendar in one row]
+  Size -->|No| Stack[Full-width primary\nSave + Calendar below]
+```
+
+The responsive decision keeps text readable and targets usable; it does not alter
+registration or calendar availability rules.
+
 - Onboarding completion is a two-write transaction (profile, then the completed
   marker): navigation to tabs happens only after both persist; on failure the
   flow stays, the draft is preserved, and a retryable error shows. A profile

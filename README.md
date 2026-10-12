@@ -77,6 +77,22 @@ This is a custom dev build project — use the development build on a device or 
 
 Adding or updating a native dependency (anything with an Android module, e.g. `expo-location`) requires rebuilding and reinstalling the app (`expo run:android` or `npm run android:build` + install). Restarting Metro or clearing its cache only reloads JavaScript — it cannot add native code, so the old binary will fail at startup with "Cannot find native module '…'" and cascading route-export errors.
 
+## Component preview
+
+React Native Storybook documents the event-details action dock with Register, saved,
+calendar-added, registration-closed, and official-source states. It is development-only;
+the production app entry and behavior stay unchanged.
+
+```bash
+npm run storybook:android
+# or
+npm run storybook:ios
+```
+
+The dock keeps a prominent 52 dp accent CTA and labeled secondary Save/Calendar buttons.
+It switches from one row to a two-row layout below 360 dp, above 115% font scale, or for
+long primary labels, preserving readable labels and 48 dp minimum touch targets.
+
 ## Run on web
 
 ```bash

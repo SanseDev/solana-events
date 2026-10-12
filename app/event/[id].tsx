@@ -1,22 +1,22 @@
 import React, { useMemo, useState } from 'react'
-import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
+import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { AppText } from '@/components/app-text'
 import { EmptyState } from '@/src/components/EmptyState'
+import { EventDetailsActionDock } from '@/src/components/EventDetailsActionDock'
 import { EventArtwork } from '@/src/components/EventArtwork'
 import { AppPressable } from '@/src/components/ui/AppPressable'
 import { getEventById } from '@/src/data/eventCatalog'
 import { COMMUNITIES_BY_ID } from '@/src/data/communities'
-import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS, type Event } from '@/src/domain/event'
+import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS } from '@/src/domain/event'
 import { useFavorites } from '@/src/hooks/useFavorites'
 import { addEventToCalendar } from '@/src/services/calendar'
 import { openExternalUrl } from '@/src/services/externalLinks'
 import { formatDateOnlySpan, formatDateTime, formatEventDateRange } from '@/src/utils/dates'
 import { getEventStatus, getRegistrationState } from '@/src/utils/eventStatus'
-import { selectionFeedback } from '@/src/utils/haptics'
-import { colors, primaryHeight, radius, screenPadding, spacing, touchTarget, typography } from '@/src/theme'
+import { colors, radius, screenPadding, spacing, touchTarget, typography } from '@/src/theme'
 
 function InfoBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -31,143 +31,6 @@ function StaticChip({ text }: { text: string }) {
   return (
     <View style={styles.staticChip}>
       <AppText style={styles.staticChipText}>{text}</AppText>
-    </View>
-  )
-}
-
-/** Persistent bottom dock: flexible primary CTA plus compact Save/calendar icon actions. */
-function ActionBar({
-  event,
-  registration,
-  saved,
-  calendarState,
-  onSave,
-  onAddToCalendar,
-}: {
-  event: Event
-  registration: ReturnType<typeof getRegistrationState>
-  saved: boolean
-  calendarState: 'idle' | 'adding' | 'added'
-  onSave: () => void
-  onAddToCalendar: () => void
-}) {
-  const insets = useSafeAreaInsets()
-  const { width, fontScale } = useWindowDimensions()
-  const registrationClosed = registration === 'closed'
-  const calendarEligible = getEventStatus(event, new Date()) !== 'ended' && Platform.OS !== 'web'
-  const primaryLabel = registrationClosed
-    ? 'Registration closed'
-    : event.registrationUrl
-      ? 'Register'
-      : 'View official source'
-  // One row when the CTA label keeps comfortable room at normal text size;
-  // narrow screens and enlarged accessibility text stack the icon actions
-  // under a full-width CTA instead of squeezing or truncating it.
-  const singleRow = width >= 360 && fontScale <= 1.3
-
-  const onPrimary = () => {
-    const url = event.registrationUrl ?? event.officialSourceUrl
-    openExternalUrl(url).catch(() => {
-      Alert.alert('Could not open link', 'Please try again later.')
-    })
-  }
-
-  const primary = (
-    <AppPressable
-      onPress={onPrimary}
-      accessibilityRole="button"
-      accessibilityLabel={primaryLabel}
-      disabled={registrationClosed}
-      style={({ pressed }) => [
-        styles.primaryButton,
-        singleRow && styles.primaryFlexible,
-        pressed && styles.primaryPressed,
-        registrationClosed && styles.primaryDisabled,
-      ]}
-    >
-      <AppText style={[styles.primaryText, registrationClosed ? styles.primaryTextDisabled : null]}>
-        {primaryLabel}
-      </AppText>
-    </AppPressable>
-  )
-
-  const saveAction = (
-    <AppPressable
-      onPress={() => {
-        selectionFeedback()
-        onSave()
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={saved ? 'Unsave event' : 'Save event'}
-      accessibilityState={{ selected: saved }}
-      style={({ pressed }) => [
-        styles.iconButton,
-        !singleRow && styles.iconButtonWide,
-        saved && styles.iconButtonSaved,
-        pressed && styles.iconButtonPressed,
-      ]}
-    >
-      <MaterialIcons
-        name={saved ? 'bookmark' : 'bookmark-border'}
-        size={22}
-        color={saved ? colors.accent : colors.textSecondary}
-      />
-    </AppPressable>
-  )
-
-  const calendarAction = calendarEligible ? (
-    <AppPressable
-      onPress={onAddToCalendar}
-      accessibilityRole="button"
-      accessibilityLabel={
-        calendarState === 'added'
-          ? 'Added to calendar'
-          : calendarState === 'adding'
-            ? 'Adding to calendar'
-            : 'Add to calendar'
-      }
-      accessibilityState={{
-        selected: calendarState === 'added',
-        disabled: calendarState !== 'idle',
-        busy: calendarState === 'adding',
-      }}
-      disabled={calendarState !== 'idle'}
-      style={({ pressed }) => [
-        styles.iconButton,
-        !singleRow && styles.iconButtonWide,
-        calendarState === 'added' && styles.iconButtonAdded,
-        pressed && styles.iconButtonPressed,
-      ]}
-    >
-      {calendarState === 'adding' ? (
-        <ActivityIndicator size="small" color={colors.textSecondary} />
-      ) : (
-        <MaterialIcons
-          name={calendarState === 'added' ? 'check' : 'event'}
-          size={22}
-          color={calendarState === 'added' ? colors.success : colors.textSecondary}
-        />
-      )}
-    </AppPressable>
-  ) : null
-
-  return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
-      {singleRow ? (
-        <View style={styles.actionRow}>
-          {primary}
-          {saveAction}
-          {calendarAction}
-        </View>
-      ) : (
-        <View style={styles.stackedRows}>
-          {primary}
-          <View style={styles.actionRow}>
-            {saveAction}
-            {calendarAction}
-          </View>
-        </View>
-      )}
     </View>
   )
 }
@@ -195,6 +58,9 @@ export default function EventDetailScreen() {
   const status = getEventStatus(event, now)
   const registration = getRegistrationState(event, now)
   const saved = isFavorite(event.id)
+  const primaryLabel =
+    registration === 'closed' ? 'Registration closed' : event.registrationUrl ? 'Register' : 'View official source'
+  const calendarEligible = status !== 'ended' && Platform.OS !== 'web'
   const dateText = event.allDay
     ? formatDateOnlySpan(event.startAt, event.endAt)
     : formatEventDateRange(event.startAt, event.endAt, event.timezoneLabel)
@@ -220,6 +86,13 @@ export default function EventDetailScreen() {
       return
     }
     Alert.alert('Could not add event', 'Please try again later.')
+  }
+
+  const onPrimary = () => {
+    const url = event.registrationUrl ?? event.officialSourceUrl
+    openExternalUrl(url).catch(() => {
+      Alert.alert('Could not open link', 'Please try again later.')
+    })
   }
 
   return (
@@ -288,11 +161,13 @@ export default function EventDetailScreen() {
             {status === 'ended' ? ' This event has ended.' : status === 'ongoing' ? ' Happening now.' : ''}
           </AppText>
         </ScrollView>
-        <ActionBar
-          event={event}
-          registration={registration}
+        <EventDetailsActionDock
+          primaryLabel={primaryLabel}
+          primaryDisabled={registration === 'closed'}
           saved={saved}
           calendarState={calendarState}
+          showCalendar={calendarEligible}
+          onPrimary={onPrimary}
           onSave={() => toggleFavorite(event.id)}
           onAddToCalendar={onAddToCalendar}
         />
@@ -393,76 +268,5 @@ const styles = StyleSheet.create({
   persistError: {
     color: colors.warning,
     ...typography.label,
-  },
-  bar: {
-    paddingHorizontal: screenPadding,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSubtle,
-    backgroundColor: colors.canvasRaised,
-    shadowColor: colors.canvas,
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.85,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  stackedRows: {
-    gap: spacing.sm,
-  },
-  primaryButton: {
-    minHeight: primaryHeight,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryFlexible: {
-    flex: 1,
-  },
-  primaryPressed: {
-    backgroundColor: colors.accentPressed,
-  },
-  primaryDisabled: {
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  primaryText: {
-    color: colors.onAccent,
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 22,
-  },
-  primaryTextDisabled: {
-    color: colors.textSecondary,
-  },
-  iconButton: {
-    width: touchTarget,
-    minHeight: primaryHeight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  iconButtonWide: {
-    flex: 1,
-  },
-  iconButtonSaved: {
-    backgroundColor: colors.accentMuted,
-    borderColor: colors.accentMuted,
-  },
-  iconButtonAdded: {
-    borderColor: colors.borderStrong,
-  },
-  iconButtonPressed: {
-    backgroundColor: colors.surfacePressed,
   },
 })

@@ -25,6 +25,10 @@ type: user-stories
 
 - Acceptance: date range with explicit timezone label; registration deadline block when present; `Registration closed` state; `Register` or `View official source` opens only `https` URLs; `Official source` secondary link always present; `Details verified on YYYY-MM-DD` line.
 - Implemented in: `app/event/[id].tsx`, `src/services/externalLinks.ts` (tested).
+- Dock refinement 2026-10-12: fixed action dock uses an accent primary CTA plus visible,
+  labeled Save and Calendar buttons. Register uses one row at normal scale; long CTA
+  labels, narrow screens, and text above 115% use two rows without truncation. Save,
+  calendar loading/success, and registration-disabled states expose accessible state.
 
 ## Saving
 
