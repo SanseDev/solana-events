@@ -32,6 +32,10 @@ describe('wallet service safety (plan §8)', () => {
     expect(walletServiceSource).toMatch(/\bconnect\b/)
   })
 
+  it('supports both native base58 text and typed PublicKey addresses', () => {
+    expect(walletServiceSource).toContain("typeof account?.address === 'string'")
+  })
+
   it('is the only app code importing the MWA hook', () => {
     const screenDirs = ['app', 'src/components']
     for (const dir of screenDirs) {

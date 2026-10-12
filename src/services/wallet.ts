@@ -28,7 +28,8 @@ export function useWalletSession(): WalletSession {
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const address = account?.address.toBase58() ?? null
+  // Wallet UI types this as PublicKey, but native MWA can return base58 text.
+  const address = typeof account?.address === 'string' ? account.address : (account?.address.toBase58() ?? null)
   const label = account?.label ?? null
 
   const connect = useCallback(async () => {
