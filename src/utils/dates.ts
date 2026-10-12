@@ -1,0 +1,50 @@
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const
+
+/** Parses an ISO 8601 string with offset to epoch milliseconds (NaN when invalid). */
+export function parseInstant(iso: string): number {
+  return Date.parse(iso)
+}
+
+interface EventLocalDate {
+  year: string
+  month: string
+  day: string
+  time: string
+}
+
+/**
+ * Extracts date/time parts from the ISO string itself so display always uses the
+ * event's own timezone (with offset), never the device timezone.
+ */
+function toLocalParts(iso: string): EventLocalDate {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/.exec(iso)
+  if (!match) {
+    throw new Error(`Invalid event ISO date: ${iso}`)
+  }
+  return { year: match[1], month: match[2], day: match[3], time: match[4] }
+}
+
+/** Compact date block for event cards: uppercase month + day of the event-local date. */
+export function formatDateBlock(iso: string): { month: string; day: string } {
+  const parts = toLocalParts(iso)
+  const monthName = MONTHS_SHORT[Number(parts.month) - 1]
+  return { month: monthName.toUpperCase(), day: parts.day }
+}
+
+/** Human-readable range, e.g. `10 Nov 2026, 18:00–22:00 CET`. */
+export function formatEventDateRange(startIso: string, endIso: string, timezoneLabel: string) {
+  const start = toLocalParts(startIso)
+  const end = toLocalParts(endIso)
+  const sameDay = start.year === end.year && start.month === end.month && start.day === end.day
+  if (sameDay) {
+    return `${start.day} ${MONTHS_SHORT[Number(start.month) - 1]} ${start.year}, ${start.time}–${end.time} ${timezoneLabel}`
+  }
+  const startDate = `${start.day} ${MONTHS_SHORT[Number(start.month) - 1]} ${start.year}`
+  const endDate = `${end.day} ${MONTHS_SHORT[Number(end.month) - 1]} ${end.year}`
+  return `${startDate}, ${start.time} – ${endDate}, ${end.time} ${timezoneLabel}`
+}
+
+/** True when `iso` instant is strictly before `thanIso` instant. */
+export function isBefore(iso: string, thanIso: string): boolean {
+  return parseInstant(iso) < parseInstant(thanIso)
+}
