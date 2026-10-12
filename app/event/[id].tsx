@@ -35,7 +35,7 @@ function StaticChip({ text }: { text: string }) {
   )
 }
 
-/** Persistent bottom bar: primary registration/source action above Save + calendar. */
+/** Persistent bottom dock: primary CTA with compact Save beside it, outlined calendar below. */
 function ActionBar({
   event,
   registration,
@@ -69,22 +69,22 @@ function ActionBar({
 
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
-      <AppPressable
-        onPress={onPrimary}
-        accessibilityRole="button"
-        accessibilityLabel={primaryLabel}
-        disabled={registrationClosed}
-        style={({ pressed }) => [
-          styles.primaryButton,
-          pressed && styles.primaryPressed,
-          registrationClosed && styles.primaryDisabled,
-        ]}
-      >
-        <AppText style={[styles.primaryText, registrationClosed ? styles.primaryTextDisabled : null]}>
-          {primaryLabel}
-        </AppText>
-      </AppPressable>
-      <View style={styles.secondaryRow}>
+      <View style={styles.primaryRow}>
+        <AppPressable
+          onPress={onPrimary}
+          accessibilityRole="button"
+          accessibilityLabel={primaryLabel}
+          disabled={registrationClosed}
+          style={({ pressed }) => [
+            styles.primaryButton,
+            pressed && styles.primaryPressed,
+            registrationClosed && styles.primaryDisabled,
+          ]}
+        >
+          <AppText style={[styles.primaryText, registrationClosed ? styles.primaryTextDisabled : null]}>
+            {primaryLabel}
+          </AppText>
+        </AppPressable>
         <AppPressable
           onPress={() => {
             selectionFeedback()
@@ -92,47 +92,44 @@ function ActionBar({
           }}
           accessibilityRole="button"
           accessibilityLabel={saved ? 'Unsave event' : 'Save event'}
-          style={({ pressed }) => [styles.secondaryButton, pressed && pressedBackground]}
+          style={({ pressed }) => [styles.saveButton, pressed && pressedBackground]}
         >
           <MaterialIcons
             name={saved ? 'bookmark' : 'bookmark-border'}
-            size={20}
+            size={22}
             color={saved ? colors.accent : colors.textSecondary}
           />
-          <AppText style={[styles.secondaryText, saved && styles.secondaryTextActive]}>
-            {saved ? 'Saved' : 'Save'}
+        </AppPressable>
+      </View>
+      {calendarEligible ? (
+        <AppPressable
+          onPress={onAddToCalendar}
+          accessibilityRole="button"
+          accessibilityLabel={
+            calendarState === 'added'
+              ? 'Added to calendar'
+              : calendarState === 'adding'
+                ? 'Adding to calendar'
+                : 'Add to calendar'
+          }
+          accessibilityState={{ disabled: calendarState !== 'idle', busy: calendarState === 'adding' }}
+          disabled={calendarState !== 'idle'}
+          style={({ pressed }) => [styles.calendarButton, pressed && styles.calendarPressed]}
+        >
+          <MaterialIcons
+            name={calendarState === 'added' ? 'check' : 'event'}
+            size={20}
+            color={calendarState === 'added' ? colors.success : colors.textSecondary}
+          />
+          <AppText style={styles.calendarText}>
+            {calendarState === 'added'
+              ? 'Added to calendar'
+              : calendarState === 'adding'
+                ? 'Adding…'
+                : 'Add to calendar'}
           </AppText>
         </AppPressable>
-        {calendarEligible ? (
-          <AppPressable
-            onPress={onAddToCalendar}
-            accessibilityRole="button"
-            accessibilityLabel={
-              calendarState === 'added'
-                ? 'Added to calendar'
-                : calendarState === 'adding'
-                  ? 'Adding to calendar'
-                  : 'Add to calendar'
-            }
-            accessibilityState={{ disabled: calendarState !== 'idle', busy: calendarState === 'adding' }}
-            disabled={calendarState !== 'idle'}
-            style={({ pressed }) => [styles.secondaryButton, pressed && pressedBackground]}
-          >
-            <MaterialIcons
-              name={calendarState === 'added' ? 'check' : 'event'}
-              size={20}
-              color={calendarState === 'added' ? colors.success : colors.textSecondary}
-            />
-            <AppText style={styles.secondaryText}>
-              {calendarState === 'added'
-                ? 'Added to calendar'
-                : calendarState === 'adding'
-                  ? 'Adding…'
-                  : 'Add to calendar'}
-            </AppText>
-          </AppPressable>
-        ) : null}
-      </View>
+      ) : null}
     </View>
   )
 }
@@ -366,8 +363,19 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderSubtle,
     backgroundColor: colors.canvasRaised,
+    shadowColor: colors.canvas,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  primaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   primaryButton: {
+    flex: 1,
     minHeight: primaryHeight,
     borderRadius: radius.md,
     backgroundColor: colors.accent,
@@ -391,29 +399,33 @@ const styles = StyleSheet.create({
   primaryTextDisabled: {
     color: colors.textSecondary,
   },
-  secondaryRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  saveButton: {
+    width: touchTarget,
+    minHeight: primaryHeight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
-  secondaryButton: {
-    flex: 1,
+  calendarButton: {
     minHeight: touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.borderStrong,
   },
-  secondaryText: {
+  calendarPressed: {
+    backgroundColor: colors.surfacePressed,
+  },
+  calendarText: {
     color: colors.textSecondary,
     ...typography.label,
     fontSize: 15,
     lineHeight: 20,
-  },
-  secondaryTextActive: {
-    color: colors.accent,
   },
 })
