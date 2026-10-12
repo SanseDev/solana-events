@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { AppConfig } from '@/constants/app-config'
 
-export type WalletStatus = 'disconnected' | 'connecting' | 'connected'
+export type WalletStatus = 'unsupported' | 'disconnected' | 'connecting' | 'connected'
 
 export interface WalletSession {
   status: WalletStatus

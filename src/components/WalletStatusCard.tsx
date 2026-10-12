@@ -51,6 +51,14 @@ export function WalletStatusCard({ session }: { session: WalletSession }) {
           <AppText style={styles.message}>Approve the request in your wallet, or cancel to stay disconnected.</AppText>
           <ActivityIndicator color={colors.accent} />
         </>
+      ) : status === 'unsupported' ? (
+        <>
+          <AppText style={styles.title}>Wallet unavailable on web</AppText>
+          <AppText style={styles.message}>
+            Mobile Wallet Adapter requires the Android app with a native wallet such as Seeker or Phantom. The event
+            catalog, saved events, and interests all work here without a wallet.
+          </AppText>
+        </>
       ) : (
         <>
           <AppText style={styles.title}>Connect your wallet</AppText>

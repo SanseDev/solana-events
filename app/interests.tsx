@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
@@ -40,6 +40,11 @@ export default function InterestsScreen() {
   }
 
   const confirmReset = () => {
+    // Alert.alert renders nothing on react-native-web, so reset directly.
+    if (Platform.OS === 'web') {
+      setDraft({ topics: [], communityIds: [] })
+      return
+    }
     Alert.alert('Reset preferences', 'Clear all topics and communities?', [
       { text: 'Cancel', style: 'cancel' },
       {

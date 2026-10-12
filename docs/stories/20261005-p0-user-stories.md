@@ -46,3 +46,7 @@ type: user-stories
 
 - Acceptance: connect/disconnect/cancel/error states; truncated address + copy; catalog fully usable when disconnected or when wallet errors; no balance, no signing, no transactions; security note about recovery phrase.
 - Implemented in: `src/services/wallet.ts`, `src/components/WalletStatusCard.tsx`, `app/(tabs)/profile.tsx`.
+
+## Platform availability (2026-10-06)
+
+All Discovery, Event details, Saving, and Personalization stories also run on web (`npx expo start --web`, Metro static output). On web the wallet story renders an informational "Wallet unavailable on web" card — MWA requires the Android app with a native wallet such as Seeker or Phantom; interests and saved events work without one (`src/services/wallet.web.ts`, `components/app-providers.web.tsx`). See `docs/specs/20261006-web-platform-support.md`.

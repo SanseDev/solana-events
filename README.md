@@ -49,6 +49,14 @@ npx expo start --dev-client
 
 This is a custom dev build project — use the development build on a device or emulator, not Expo Go (Mobile Wallet Adapter requires it).
 
+## Run on web
+
+```bash
+npx expo start --web
+```
+
+Opens `http://localhost:8081` with the same event catalog: search, filters, event details, saved events, and interests all work. Wallet connection is native-only (Mobile Wallet Adapter); on web the Profile screen explains that a native wallet such as Seeker or Phantom on Android is required. See `docs/specs/20261006-web-platform-support.md`.
+
 ## Build the APK
 
 ```bash

@@ -13,7 +13,9 @@ import { colors, radius, spacing } from '@/src/theme'
 export default function ProfileScreen() {
   const session = useWalletSession()
   const interests = useInterests()
-  const connected = session.status === 'connected'
+  // Interests are stored locally and never require a wallet; on web the
+  // session is `unsupported`, so keep the section visible there too.
+  const connected = session.status === 'connected' || session.status === 'unsupported'
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
