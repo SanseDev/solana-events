@@ -78,12 +78,15 @@ Opens `http://localhost:8081` with the same event catalog: search, filters, even
 ## Build the APK
 
 ```bash
-npm install -g eas-cli
-eas login
-eas build -p android --profile preview
+npx eas-cli@latest login
+npx eas-cli@latest build -p android --profile preview
 ```
 
 The `preview` profile in `eas.json` sets `android.buildType: "apk"`, producing a universal APK installable on any Android device including the Seeker.
+
+Release identity: Android package ID `com.sansedev.solwhere` (owner-approved 2026-10-08; fixed before first store publication).
+
+**Build status: no EAS cloud build has been run yet.** As of 2026-10-08 no EAS CLI login session exists on the development machine, so the build above is the exact next command to run. No APK artifact exists until that build succeeds — status will be recorded here and in `docs/release-validation.md`.
 
 ## Event sources
 
@@ -128,4 +131,27 @@ Typecheck, lint, and unit tests must all pass before every commit; `npm run ci` 
 | EAS APK build                                 | manual     | pending |
 | Demo video / pitch deck                       | manual     | pending |
 
-Automated results above were produced by the commands in this README on 2026-10-08. Manual items are **not yet done**: they require the release-candidate APK on real hardware (standard Android and Seeker) and have not been run — no hardware test, APK build, video, or deck exists yet. Blockers: final Android package ID (owner decision; cannot change after release) and EAS login for the cloud build, or a local `eas build --local` with the Android SDK.
+Automated results above were produced by the commands in this README on 2026-10-08. Manual items are **not yet done**: they require the release-candidate APK on real hardware (standard Android and Seeker) and have not been run — no hardware test, APK build, video, or deck exists yet. Remaining blockers: EAS login for the cloud build (or a local `eas build --local` with the Android SDK), then on-device validation.
+
+## Release status and submission checklist
+
+| Item                                                 | Status                                                      |
+| ---------------------------------------------------- | ----------------------------------------------------------- |
+| Android package ID                                   | done — `com.sansedev.solwhere`                              |
+| Automated checks (typecheck, lint, format, 80 tests) | done — 2026-10-08                                           |
+| Android prebuild with final package ID               | done — native files regenerated 2026-10-08                  |
+| EAS APK cloud build                                  | pending — command above; requires `eas-cli` login           |
+| Standard Android device validation                   | pending — checklist in `docs/release-validation.md`         |
+| Seeker device validation (Seed Vault MWA)            | pending — checklist in `docs/release-validation.md`         |
+| Demo video                                           | pending — script ready: `docs/demo-script.md`               |
+| Pitch deck                                           | pending — source ready: `docs/pitch-deck.md`                |
+| Screenshots                                          | pending — capture checklist in `docs/release-validation.md` |
+| Store/judging submission                             | pending — after all above                                   |
+
+Release documentation:
+
+- `docs/release-validation.md` — hardware test checklist, evidence fields, screenshot capture plan
+- `docs/demo-script.md` — 60–90s demo video script
+- `docs/pitch-deck.md` — 7-slide pitch deck source
+- `docs/versions.md` — installed toolchain versions
+- `docs/implementation-plan.md` — scope source of truth
