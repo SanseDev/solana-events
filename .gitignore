@@ -42,3 +42,7 @@ app-example
 # https://docs.expo.dev/workflow/continuous-native-generation/
 /android
 /ios
+
+# IA
+.agents/
+.claude/
