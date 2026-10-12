@@ -1,3 +1,6 @@
+import type { Interests } from '../../domain/event'
+import { loadFavorites, loadInterests, saveFavorites, saveInterests, STORAGE_KEYS } from '../storage'
+
 jest.mock('@react-native-async-storage/async-storage', () => {
   const store = new Map<string, string>()
   return {
@@ -10,9 +13,6 @@ jest.mock('@react-native-async-storage/async-storage', () => {
     },
   }
 })
-
-import type { Interests } from '../../domain/event'
-import { loadFavorites, loadInterests, saveFavorites, saveInterests, STORAGE_KEYS } from '../storage'
 
 describe('favorites storage', () => {
   it('returns empty array when nothing stored', async () => {

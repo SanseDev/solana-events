@@ -1,12 +1,12 @@
+import { Linking } from 'react-native'
+import { openExternalUrl } from '../externalLinks'
+
 jest.mock('react-native', () => ({
   Linking: {
     openURL: jest.fn().mockResolvedValue(undefined),
     canOpenURL: jest.fn().mockResolvedValue(true),
   },
 }))
-
-import { Linking } from 'react-native'
-import { openExternalUrl } from '../externalLinks'
 
 const openURL = Linking.openURL as jest.MockedFunction<typeof Linking.openURL>
 
