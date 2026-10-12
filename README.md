@@ -61,14 +61,14 @@ The `preview` profile in `eas.json` sets `android.buildType: "apk"`, producing a
 
 ## Event sources
 
-| Event                             | Organizer              | Source                |
-| --------------------------------- | ---------------------- | --------------------- |
-| Breakpoint 2026                   | Solana Foundation      | solana.com/breakpoint |
-| Hacker House London 2026          | Solana Foundation      | solana.com/events     |
-| Solana Intelligence Summit 2026   | Solana Foundation      | solana.com/events     |
-| Solana Summit India 2026          | Solana Foundation      | solana.com/events     |
-| IslandDAO Grant Cohort v5         | IslandDAO              | islanddao.org         |
-| Solana Startup Connect Ghana 2026 | Solana Startup Connect | superteam.fun         |
+| Event                        | Organizer              | Official source              |
+| ---------------------------- | ---------------------- | ---------------------------- |
+| Solana Breakpoint 2026       | Solana Foundation      | solana.com/breakpoint        |
+| Solana Hacker House — London | Solana Foundation      | luma.com/london-hh-26        |
+| Solana Intelligence Summit   | Solana Foundation      | luma.com/intelligence-summit |
+| Solana Summit India          | Superteam India        | luma.com/solana-summit-india |
+| IslandDAO v5                 | IslandDAO/Superteam BR | luma.com/6laijuyn            |
+| solanaStartupConnectGH       | Ghana Solana builders  | luma.com/nx9ps6ud            |
 
 Each event records `lastVerifiedAt`; the detail screen shows "Details verified on {date}".
 
