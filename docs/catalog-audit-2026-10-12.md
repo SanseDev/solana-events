@@ -2,7 +2,8 @@
 
 Verification window: 2026-10-12 ~11:30–11:45 UTC (pages fetched directly; JSON-LD
 structured metadata + rendered descriptions read per page). Existing count: 6.
-Added: 46. Final count: 51. Pending: 2 (+2 trap pages outside the queue). Excluded: 1.
+Added: 45. Final count: 51. Pending: 2 (+2 trap pages outside the queue). Excluded: 1.
+Totals account for all 48 candidates (45 + 2 + 1).
 Post-review corrections (same day): Vancouver VibeStation Nov 6 demoted from Added to
 Pending (unresolvable timezone-offset conflict; see D/30); two ISO offset
 representations corrected without changing instants (A/5, E/43) so displayed wall
