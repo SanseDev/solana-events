@@ -95,8 +95,14 @@ const styles = StyleSheet.create({
   },
   // Transparent absolute-fill touch overlay drawn above the content row;
   // the visual pressed state is applied to the card root instead.
+  // RN 0.86 removed `StyleSheet.absoluteFillObject` from the public types,
+  // so the overlay spreads an explicit equivalent literal instead.
   openTarget: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     borderRadius: radius.card,
     zIndex: 1,
   },
