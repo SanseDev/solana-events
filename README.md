@@ -1,186 +1,101 @@
 # Solwhere
 
-Offline-first calendar of verified Solana ecosystem events, built for Android and the Solana Mobile Seeker. Created for the Solana Mobile **CLOCK IN** hackathon (2026).
+Solwhere is an Android-first, offline-capable guide to curated Solana ecosystem events. It helps builders, community members, and newcomers find relevant events, save them locally, and open the organizer's official registration page.
+
+The submitted app contains a bundled catalog of 51 manually curated events. Discovery, saved events, and preferences remain usable without an account, wallet, or network connection. External registration, wallet connection, location lookup, and calendar writing depend on their respective services.
 
 Repository: <https://github.com/SanseDev/solana-events>
 
-The catalog ships inside the app: every event is researched and verified against its official source before release. No network permission, no tracking, no accounts. Connect a wallet via Mobile Wallet Adapter to identify yourself — nothing else.
+## Problem and users
 
-The catalog holds 51 verified events as of 2026-10-12 (Breakpoint week, Superteam chapter happenings, online sessions, and recurring co-working days). Per-event verification evidence, restrictions, and contradiction flags live in `docs/catalog-audit-2026-10-12.md`; the expansion process is specified in `docs/specs/20261012-catalog-expansion.md`.
+Solana events are spread across organizer pages, community calendars, and social posts. Solwhere provides one curated mobile catalog for people deciding what to attend, whether they are looking for a local meetup, an online session, a conference, or a builder event.
 
-## P0 scope (exactly what ships)
+It is designed for Solana ecosystem participants who want a quick event-discovery experience on Android, including Solana Mobile devices. Registration remains with each event's official organizer.
 
-- Discover, search, and filter the verified local catalog (topic, format, attendance mode, this-week, location).
-- Skippable three-step onboarding seeding an optional preference profile (intent, topics, participation, location).
-- Truthful personalization: `Matched for you` cards only appear when a persisted choice actually matches, with the reason shown.
-- Event detail with timezone-safe dates, 16:9 editorial cover, and a persistent bottom action bar (Register / View official source, Save, Add to calendar).
-- Saved events persisted locally, grouped by device-timezone date (`Today`, `Tomorrow`, `Tue, 15 Nov`), upcoming then past; event details keep the event's own timezone.
-- Wallet connection via Mobile Wallet Adapter: authorization only — connect, show public address, copy, disconnect. Preferences are never gated behind it.
+## Submitted version: what works
 
-## P1 scope
+- Browse upcoming events from bundled catalog; view verified date, timezone, location, topics, community, and official links.
+- Search event titles and organizers. Filter by topic, format, attendance mode, this week, and catalog location.
+- Complete or skip three-step onboarding. Optional intent, topic, attendance, and location preferences are stored on device.
+- See preference-based ranking with visible match reasons. This is local preference matching, not NFT ownership or community-holder discovery.
+- Save events locally. Saved events persist across restarts and are grouped by the device's calendar date.
+- Add a future event to an Android calendar after an in-context permission request. The app prefers a writable primary calendar, then another writable calendar.
+- Connect a compatible Android wallet through Mobile Wallet Adapter to display its public address, copy it, or disconnect.
 
-- **Add to calendar** (Android native): from Event Details, copy a verified event into the device's primary writable calendar — title, timezone-correct start/end, all-day span when the source publishes no times, location, and the official URL in the notes. Calendar permission is requested in context at button press; denial, a device without writable calendars, and write failures each show a clear message and never block the catalog. Hidden on web and for ended events.
+Wallet connection is authorization-only. Solwhere does not authenticate event access, check ownership, read balances, perform RPC reads, sign messages, sign transactions, or send transactions.
 
-## Scope limits (by design)
+## Download and demo
 
-- No balance, no transactions, no signing, no push, no accounts, no backend, no auth, no database.
-- The wallet flow is authorization-only: it calls MWA `connect()` and never `signIn()`, never requests a message or transaction signature, and never performs an RPC read.
-- Catalog updates ship with app releases — it is a verified snapshot, not a feed.
-- Registration always happens on the official organizer page; this app links out to `https` sources only.
-- Not built: NFT/collection detection, any backend or payments.
+No EAS build-details URL, direct APK artifact URL, demo-video URL, deck export, or device-validation evidence is recorded in this repository. Do not treat a future EAS build-details page as a direct APK download link: judges need the artifact's downloaded `.apk` URL or file.
 
-## Future work
+There are no suitable submitted-app screenshots in the repository. The images under `assets/images/` are application branding assets, not product screenshots. See [Judge guide](docs/judge-guide.md) for artifact and test status.
 
-- Catalog API to refresh events without an app release.
-- Calendar reminders and calendar picker (current P1 writes one event to the primary writable calendar only).
-- Opt-in collection-based community suggestions using verified collection IDs. Not implemented — the app does not read NFT data and never claims to.
+## Install and quick test on Android
 
-## What it does
+The intended submission artifact is an EAS `preview` standalone APK for package `com.sansedev.solwhere`. It is not an Expo Go project at runtime: a standalone APK should launch without Metro, Expo Go, or a computer.
 
-- **Discover** upcoming verified events with dates in the event's own timezone: a featured `Coming up` card, up to two truthfully-reasoned `Matched for you` picks, and the chronological remainder — no duplicates.
-- **Search and filter** by topic, format, attendance mode, this-week, and catalog location — locally, instantly.
-- **Onboard in three optional steps** (intent, topics, participation + location) that rank Discover; Skip works at any time and the draft resumes after a kill.
-- **Save events** persistently, grouped by device-timezone date in Saved (upcoming ascending, past descending).
-- **Add to calendar** on Android from Event Details (P1).
-- **Wallet connect** via Mobile Wallet Adapter (view address only); local preferences never require it.
+1. Obtain original EAS-signed `.apk` artifact from submission once its direct link is supplied.
+2. Install that file on an Android device. Start Solwhere from its launcher icon.
+3. On first launch, complete or skip onboarding. Browse Discover, open an event, save it, and verify it in Saved.
+4. Open a future event and use Calendar. Grant calendar access only if testing this feature.
+5. Open Profile to test wallet connection only on a compatible Android wallet device. All catalog features work without a wallet.
 
-## Architecture
+If an older development build uses the same package ID with a different signing certificate, Android may reject the standalone APK as an update. Uninstalling that development build allows a clean install but deletes that app's local preferences and saved events. See [Judge guide](docs/judge-guide.md) for expected denied-permission and cancelled-wallet behavior.
 
-```
-app/                  expo-router screens (onboarding; tabs: Discover, Saved, Profile; event/[id]; preferences)
-src/domain/           Event/Community/PreferenceProfile types, filter logic, fixtures
-src/data/             verified catalog (events.json), communities, catalog accessors
-src/services/         AsyncStorage persistence (v1→v2 migration), external links, wallet session, calendar
-src/hooks/            Favorites and Preferences providers, filter state
-src/components/       EventCard, FeaturedEvent, FilterSheet, PreferenceEditor, DateGroup, WalletStatusCard, shared UI
-src/utils/            dates (timezone-safe string parsing), dateGroups, ranking, event status
-src/theme/            semantic dark design tokens (colors, spacing, typography)
-```
+## Local development
 
-Key decisions:
-
-- **Timezone-safe dates.** Formatters parse the ISO 8601 string directly so `10 Nov` stays `10 Nov` in the event's timezone regardless of device locale.
-- **Verifiable catalog.** `src/data/eventCatalog.ts` filters the raw dataset through `isValidEvent` at runtime; a test asserts id uniqueness, https-only URLs, and valid date ranges.
-- **Wallet isolation.** The wallet layer exposes an address and nothing else. All forbidden flows (transfers, signing, balances) were removed from the starter template.
-- **Versioned storage.** AsyncStorage keys carry a version suffix (`solana-events:favorites:v1`, `solana-events:interests:v1`, `solana-events:preferences:v2`, `solana-events:onboarding:v1`) so migrations are explicit. `loadPreferences()` migrates legacy interests v1 into a v2 profile in place and never deletes v1.
-
-## Setup
-
-Requirements: Node 24, JDK 17, Android SDK (see `docs/versions.md`).
+Use npm: this repository has `package-lock.json`. `eas.json` pins Node `22.23.1` for preview build; use that Node version locally when reproducing Android build behavior. Repository does not declare an `engines` field.
 
 ```bash
 npm install
+npm run start
+```
+
+Native wallet, location, and calendar modules require a custom development build; Expo Go is not a supported Android test environment.
+
+```bash
+npm run android
+# In a separate terminal after installing development build:
 npx expo start --dev-client
 ```
 
-This is a custom dev build project — use the development build on a device or emulator, not Expo Go (Mobile Wallet Adapter requires it).
+`npm run android:build` runs Expo prebuild only. It regenerates ignored native project files; it does not compile or sign a release APK. A native dependency change requires a new development build or standalone build, not only a Metro restart.
 
-Adding or updating a native dependency (anything with an Android module, e.g. `expo-location`) requires rebuilding and reinstalling the app (`expo run:android` or `npm run android:build` + install). Restarting Metro or clearing its cache only reloads JavaScript — it cannot add native code, so the old binary will fail at startup with "Cannot find native module '…'" and cascading route-export errors.
-
-## Component preview
-
-React Native Storybook documents the event-details action dock with Register, saved,
-calendar-added, registration-closed, and official-source states. It is development-only;
-the production app entry and behavior stay unchanged.
-
-```bash
-npm run storybook:android
-# or
-npm run storybook:ios
-```
-
-The dock keeps a prominent 52 dp accent CTA and labeled secondary Save/Calendar buttons.
-It switches from one row to a two-row layout below 360 dp, above 115% font scale, or for
-long primary labels, preserving readable labels and 48 dp minimum touch targets.
-
-## Run on web
+For web-only UI inspection:
 
 ```bash
 npx expo start --web
 ```
 
-Opens `http://localhost:8081` with the same event catalog: search, filters, event details, saved events, onboarding, and preferences all work. Wallet connection is native-only (Mobile Wallet Adapter); on web the Profile screen explains that a native wallet such as Seeker or Phantom on Android is required. See `docs/specs/20261006-web-platform-support.md`.
+Wallet connection is reported as unsupported on web. Calendar addition is hidden on web.
 
-## Build the APK
+## Architecture
 
-```bash
-npx eas-cli@latest login
-npx eas-cli@latest build -p android --profile preview
-```
+Solwhere is an Expo SDK 57 / React Native application using Expo Router. It has no backend, server API, database, login system, or remote catalog fetch. Catalog is imported from `src/data/events.json`; user state is stored with AsyncStorage.
 
-The `preview` profile in `eas.json` sets `android.buildType: "apk"`, producing a universal APK installable on any Android device including the Seeker.
+See [architecture documentation](docs/architecture.md) for routing, state, storage migrations, catalog flow, artwork behavior, services, and preview-build configuration.
 
-Android package ID selected for this release: `com.sansedev.solwhere`.
+## Verification commands
 
-**Build status: no EAS cloud build has been run yet.** As of 2026-10-08 no EAS CLI login session exists on the development machine, so the build above is the exact next command to run. No APK artifact exists until that build succeeds — status will be recorded here and in `docs/release-validation.md`.
-
-## Event sources
-
-| Event                        | Organizer              | Official source              |
-| ---------------------------- | ---------------------- | ---------------------------- |
-| Solana Breakpoint 2026       | Solana Foundation      | solana.com/breakpoint        |
-| Solana Hacker House — London | Solana Foundation      | luma.com/london-hh-26        |
-| Solana Intelligence Summit   | Solana Foundation      | luma.com/intelligence-summit |
-| Solana Summit India          | Superteam India        | luma.com/solana-summit-india |
-| IslandDAO v5                 | IslandDAO/Superteam BR | luma.com/6laijuyn            |
-| solanaStartupConnectGH       | Ghana Solana builders  | luma.com/nx9ps6ud            |
-
-Each event records `lastVerifiedAt`; all six events and every registration URL were re-verified against these pages on **2026-10-08**. The detail screen shows "Details verified on {date}".
-
-## Wallet security
-
-The app never asks for a recovery phrase, never requests balances, and never initiates transactions. Connecting a wallet shares only the public address. If any prompt asks for a recovery phrase, it is not from this app.
-
-## Tests
+These are repository scripts; this documentation update does not claim they were rerun.
 
 ```bash
 npm run typecheck
 npm run lint:check
-npm test
+npm run format:check
+npm test -- --runInBand
 ```
 
-Typecheck, lint, and unit tests must all pass before every commit; `npm run ci` additionally runs the Android prebuild.
+`npm run ci` additionally runs `expo prebuild -p android`. It modifies ignored generated native directories, so record worktree state before running it.
 
-| Area                                           | Coverage   | Status  |
-| ---------------------------------------------- | ---------- | ------- |
-| Typecheck (`tsc --noEmit`)                     | command    | passing |
-| Lint (`expo lint`)                             | command    | passing |
-| Android prebuild (`expo prebuild -p android`)  | command    | passing |
-| Domain logic (filters, ranking, status)        | unit tests | passing |
-| Date formatting (timezone-safe)                | unit tests | passing |
-| Saved date grouping (device-timezone labels)   | unit tests | passing |
-| Storage (favorites, preferences, onboarding)   | unit tests | passing |
-| External links (https-only)                    | unit tests | passing |
-| Calendar service (P1 add-to-calendar)          | unit tests | passing |
-| Catalog integrity (150 tests total, 12 suites) | unit tests | passing |
-| Wallet service safety guards                   | unit tests | passing |
-| Seeker device validation                       | manual     | pending |
-| Standard Android device                        | manual     | pending |
-| EAS APK build                                  | manual     | pending |
-| Demo video / pitch deck                        | manual     | pending |
+## Limitations and planned work
 
-Automated results above were produced by the commands in this README on 2026-10-11. The redesign (onboarding, personalized Discover, Saved grouping, Details action bar) is covered by these automated checks only — it has **not** been validated on a physical device. Manual items are **not yet done**: they require the release-candidate APK on real hardware (standard Android and Seeker) and have not been run — no hardware test, APK build, video, or deck exists yet. Remaining blockers: EAS login for the cloud build (or a local `eas build --local` with the Android SDK), then on-device validation.
+- Catalog freshness is tied to app releases because events are bundled. There is no live feed or backend refresh.
+- Offline use covers bundled catalog, filtering, local preferences, saved events, and fallback artwork. Organizer links, GPS/reverse geocoding, wallet protocol interaction, and calendar-provider behavior can require network or device services.
+- Event artwork currently uses generated SVG fallback illustrations. Candidate organizer artwork is not bundled because no reuse permission or license basis has been recorded; see [artwork permission ledger](docs/event-artwork-permissions.md).
+- Physical-device validation, signed standalone APK artifact, demo video, and deck export are not recorded as complete. See [release validation](docs/release-validation.md).
+- Planned work includes refreshable catalog and opt-in NFT/collection-based community discovery. NFT data, collection detection, holder-only access, maps, payments, and SKR/ORE integrations are not implemented.
 
-## Release status and submission checklist
+## Author and acknowledgments
 
-| Item                                                  | Status                                                      |
-| ----------------------------------------------------- | ----------------------------------------------------------- |
-| Android package ID                                    | done — `com.sansedev.solwhere`                              |
-| Automated checks (typecheck, lint, format, 150 tests) | done — 2026-10-11                                           |
-| Android prebuild with final package ID                | done — native files regenerated 2026-10-08                  |
-| EAS APK cloud build                                   | pending — command above; requires `eas-cli` login           |
-| Standard Android device validation                    | pending — checklist in `docs/release-validation.md`         |
-| Seeker device validation (Seed Vault MWA)             | pending — checklist in `docs/release-validation.md`         |
-| Demo video                                            | pending — script ready: `docs/demo-script.md`               |
-| Pitch deck                                            | pending — source ready: `docs/pitch-deck.md`                |
-| Screenshots                                           | pending — capture checklist in `docs/release-validation.md` |
-| Store/judging submission                              | pending — after all above                                   |
-
-Release documentation:
-
-- `docs/release-validation.md` — hardware test checklist, evidence fields, screenshot capture plan
-- `docs/demo-script.md` — 60–90s demo video script
-- `docs/pitch-deck.md` — 7-slide pitch deck source
-- `docs/versions.md` — installed toolchain versions
-- `docs/implementation-plan.md` — scope source of truth
-- `docs/specs/20261011-solwhere-redesign.md` — redesign feature spec (design system, Discover, preferences, onboarding)
+Created by [SanseDev](https://github.com/SanseDev). Built with Expo, React Native, Expo Router, and Solana Mobile Wallet Adapter. Event details link to organizers' official sources; artwork licensing remains tracked separately.
