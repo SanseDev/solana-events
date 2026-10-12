@@ -16,17 +16,17 @@ Source of truth for scope: `docs/implementation-plan.md` (sections 2, 5, 6, 8, 9
 
 ## Decisions
 
-| Decision | Choice | Rationale |
-| --- | --- | --- |
-| Navigation | expo-router (starter) — tabs: Discover / Saved / Profile; routes: `event/[id]`, `interests` | Single navigation solution, starter convention preserved |
-| Auth gate | Removed | Plan §8: wallet never blocks catalog. Tabs always reachable; wallet connect lives in Profile |
-| Theme | Dark-only, token-based (`src/theme`) | Plan §7: one coherent finish; tokens avoid hardcoded colors |
-| Storage | AsyncStorage via versioned-key service with safe JSON parse | Plan §9 keys `solana-events:favorites:v1`, `solana-events:interests:v1` |
-| Wallet | `useMobileWallet()` from `@wallet-ui/react-native-web3js`, wrapped in `src/services/wallet.ts` | Plan §4: screens never call MWA directly |
-| Tests | jest + jest-expo, pure domain/service logic only | TDD where logic lives; UI verified on-device per plan §11 |
-| Storybook | Not installed | RN 0.83 + Expo 55 + expo-router + dev-client makes Storybook native setup high-risk 2 days before deadline; adds no user value; components validated on real devices per test matrix |
-| Cluster | Fixed devnet endpoint, single network | Plan §3: no RPC usage in MVP; provider needs an endpoint to initialize |
-| Transactions/airdrop/sign-message screens | Deleted | Plan §8 forbids transfer/SOL/signature flows in product UI |
+| Decision                                  | Choice                                                                                         | Rationale                                                                                                                                                                            |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Navigation                                | expo-router (starter) — tabs: Discover / Saved / Profile; routes: `event/[id]`, `interests`    | Single navigation solution, starter convention preserved                                                                                                                             |
+| Auth gate                                 | Removed                                                                                        | Plan §8: wallet never blocks catalog. Tabs always reachable; wallet connect lives in Profile                                                                                         |
+| Theme                                     | Dark-only, token-based (`src/theme`)                                                           | Plan §7: one coherent finish; tokens avoid hardcoded colors                                                                                                                          |
+| Storage                                   | AsyncStorage via versioned-key service with safe JSON parse                                    | Plan §9 keys `solana-events:favorites:v1`, `solana-events:interests:v1`                                                                                                              |
+| Wallet                                    | `useMobileWallet()` from `@wallet-ui/react-native-web3js`, wrapped in `src/services/wallet.ts` | Plan §4: screens never call MWA directly                                                                                                                                             |
+| Tests                                     | jest + jest-expo, pure domain/service logic only                                               | TDD where logic lives; UI verified on-device per plan §11                                                                                                                            |
+| Storybook                                 | Not installed                                                                                  | RN 0.83 + Expo 55 + expo-router + dev-client makes Storybook native setup high-risk 2 days before deadline; adds no user value; components validated on real devices per test matrix |
+| Cluster                                   | Fixed devnet endpoint, single network                                                          | Plan §3: no RPC usage in MVP; provider needs an endpoint to initialize                                                                                                               |
+| Transactions/airdrop/sign-message screens | Deleted                                                                                        | Plan §8 forbids transfer/SOL/signature flows in product UI                                                                                                                           |
 
 ## Navigation structure
 

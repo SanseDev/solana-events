@@ -34,19 +34,19 @@ Version hackathon : catalogue local, curaté et vérifié. Pas de promesse d’a
 
 ### Scope verrouillé
 
-| Priorité | Fonctionnalité | Décision |
-| --- | --- | --- |
-| P0 | Catalogue de 5 événements réels vérifiés | Obligatoire |
-| P0 | Discover, détail, recherche, filtres | Obligatoire |
-| P0 | Favoris persistants | Obligatoire |
-| P0 | Liens source et registration officiels | Obligatoire |
-| P0 | Préférences topics et communautés manuelles | Obligatoire |
-| P0 | Connexion wallet MWA, affichage adresse, déconnexion, erreurs | Obligatoire |
-| P0 | APK release installable sans serveur | Obligatoire |
-| P1 | Ajouter au calendrier | Seulement après P0 vérifié |
-| P1 | Classement léger selon intérêts | Seulement après P0 vérifié |
-| P2 | Détection NFT/collections et suggestion communautés | Hors MVP, sauf spike déjà concluant |
-| Non | Backend, auth, base de données, scraping, smart contract, tokens, paiement | Ne pas construire |
+| Priorité | Fonctionnalité                                                             | Décision                            |
+| -------- | -------------------------------------------------------------------------- | ----------------------------------- |
+| P0       | Catalogue de 5 événements réels vérifiés                                   | Obligatoire                         |
+| P0       | Discover, détail, recherche, filtres                                       | Obligatoire                         |
+| P0       | Favoris persistants                                                        | Obligatoire                         |
+| P0       | Liens source et registration officiels                                     | Obligatoire                         |
+| P0       | Préférences topics et communautés manuelles                                | Obligatoire                         |
+| P0       | Connexion wallet MWA, affichage adresse, déconnexion, erreurs              | Obligatoire                         |
+| P0       | APK release installable sans serveur                                       | Obligatoire                         |
+| P1       | Ajouter au calendrier                                                      | Seulement après P0 vérifié          |
+| P1       | Classement léger selon intérêts                                            | Seulement après P0 vérifié          |
+| P2       | Détection NFT/collections et suggestion communautés                        | Hors MVP, sauf spike déjà concluant |
+| Non      | Backend, auth, base de données, scraping, smart contract, tokens, paiement | Ne pas construire                   |
 
 ### Solana : position honnête
 
@@ -151,37 +151,37 @@ Responsabilités :
 Utiliser ISO 8601 avec offset explicite. Exemple : `2026-10-12T18:00:00-04:00`. Ne jamais utiliser une date locale ambiguë comme `10/12/2026` dans données.
 
 ```ts
-type AttendanceMode = 'online' | 'in_person' | 'hybrid';
-type EventFormat = 'hackathon' | 'conference' | 'meetup' | 'workshop' | 'community_event';
-type Topic = 'defi' | 'nfts' | 'developers' | 'gaming' | 'consumer' | 'mobile' | 'dao';
+type AttendanceMode = 'online' | 'in_person' | 'hybrid'
+type EventFormat = 'hackathon' | 'conference' | 'meetup' | 'workshop' | 'community_event'
+type Topic = 'defi' | 'nfts' | 'developers' | 'gaming' | 'consumer' | 'mobile' | 'dao'
 
 interface Event {
-  id: string;
-  title: string;
-  shortDescription: string;
-  description: string;
-  organizer: string;
-  topics: Topic[];
-  format: EventFormat;
-  communityIds: string[];
-  startAt: string;
-  endAt: string;
-  timezoneLabel: string;
-  registrationDeadline?: string;
-  attendanceMode: AttendanceMode;
-  city?: string;
-  country?: string;
-  venue?: string;
-  officialSourceUrl: string;
-  registrationUrl?: string;
-  lastVerifiedAt: string;
-  image?: string;
+  id: string
+  title: string
+  shortDescription: string
+  description: string
+  organizer: string
+  topics: Topic[]
+  format: EventFormat
+  communityIds: string[]
+  startAt: string
+  endAt: string
+  timezoneLabel: string
+  registrationDeadline?: string
+  attendanceMode: AttendanceMode
+  city?: string
+  country?: string
+  venue?: string
+  officialSourceUrl: string
+  registrationUrl?: string
+  lastVerifiedAt: string
+  image?: string
 }
 
 interface Community {
-  id: string;
-  name: string;
-  description: string;
+  id: string
+  name: string
+  description: string
 }
 ```
 
@@ -267,19 +267,19 @@ Identité : éditoriale, utile, mobile-first. Pas de cyberpunk, néons, verre d�
 
 ### Palette dark par défaut
 
-| Token | Valeur | Usage |
-| --- | --- | --- |
-| `background` | `#0B1020` | fond global |
-| `surface` | `#151C31` | cartes et sheet |
-| `surfaceElevated` | `#1C2540` | cartes actives |
-| `textPrimary` | `#F6F7FB` | titres |
-| `textSecondary` | `#AAB4CD` | métadonnées |
-| `border` | `#2A3554` | contours subtils |
-| `accent` | `#8B7CFF` | CTA, sélection |
-| `accentStrong` | `#6C5CE7` | pressé |
-| `success` | `#4ED6A1` | saved/connecté |
-| `warning` | `#F6BE6A` | deadline proche |
-| `danger` | `#FF748D` | erreur destructive |
+| Token             | Valeur    | Usage              |
+| ----------------- | --------- | ------------------ |
+| `background`      | `#0B1020` | fond global        |
+| `surface`         | `#151C31` | cartes et sheet    |
+| `surfaceElevated` | `#1C2540` | cartes actives     |
+| `textPrimary`     | `#F6F7FB` | titres             |
+| `textSecondary`   | `#AAB4CD` | métadonnées        |
+| `border`          | `#2A3554` | contours subtils   |
+| `accent`          | `#8B7CFF` | CTA, sélection     |
+| `accentStrong`    | `#6C5CE7` | pressé             |
+| `success`         | `#4ED6A1` | saved/connecté     |
+| `warning`         | `#F6BE6A` | deadline proche    |
+| `danger`          | `#FF748D` | erreur destructive |
 
 Prévoir tokens, pas couleurs hardcodées dans composants. Mode sombre seulement pour MVP afin de livrer finition cohérente.
 
@@ -428,17 +428,17 @@ GLM doit faire une étape à la fois, lancer vérification, puis rapporter résu
 
 ## 11. Matrice de tests manuels
 
-| Parcours | Android standard | Seeker | Résultat attendu |
-| --- | --- | --- | --- |
-| Démarrage APK hors réseau | Oui | Oui | catalogue local visible |
-| Discover → détail | Oui | Oui | informations correctes |
-| Recherche et filtres | Oui | Oui | résultats cohérents et état vide |
-| Save puis redémarrage | Oui | Oui | favori conservé |
-| Lien registration | Oui | Oui | URL officielle s’ouvre |
-| Timezone/date | Oui | Oui | date lisible et correcte |
-| Wallet connect | Secondaire | Obligatoire | adresse publique affichée |
-| Wallet cancel/error/disconnect | Secondaire | Obligatoire | app reste utilisable |
-| APK standalone | Oui | Oui | démarre sans serveur |
+| Parcours                       | Android standard | Seeker      | Résultat attendu                 |
+| ------------------------------ | ---------------- | ----------- | -------------------------------- |
+| Démarrage APK hors réseau      | Oui              | Oui         | catalogue local visible          |
+| Discover → détail              | Oui              | Oui         | informations correctes           |
+| Recherche et filtres           | Oui              | Oui         | résultats cohérents et état vide |
+| Save puis redémarrage          | Oui              | Oui         | favori conservé                  |
+| Lien registration              | Oui              | Oui         | URL officielle s’ouvre           |
+| Timezone/date                  | Oui              | Oui         | date lisible et correcte         |
+| Wallet connect                 | Secondaire       | Obligatoire | adresse publique affichée        |
+| Wallet cancel/error/disconnect | Secondaire       | Obligatoire | app reste utilisable             |
+| APK standalone                 | Oui              | Oui         | démarre sans serveur             |
 
 Ne pas dire « testé » si seulement TypeScript compile. Rapport final doit distinguer : compilé, testé émulateur, testé téléphone, testé Seeker.
 
