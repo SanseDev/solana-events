@@ -1,22 +1,12 @@
 import { clusterApiUrl } from '@solana/web3.js'
-import { Cluster } from '@/components/cluster/cluster'
-import { ClusterNetwork } from '@/components/cluster/cluster-network'
+import type { Chain } from '@solana-mobile/mobile-wallet-adapter-protocol'
 
+/** App identity shared with wallets during MWA authorization. */
 export class AppConfig {
-  static name = 'solana-events-app'
-  static uri = 'https://example.com'
-  static clusters: Cluster[] = [
-    {
-      id: 'solana:devnet',
-      name: 'Devnet',
-      endpoint: clusterApiUrl('devnet'),
-      network: ClusterNetwork.Devnet,
-    },
-    {
-      id: 'solana:testnet',
-      name: 'Testnet',
-      endpoint: clusterApiUrl('testnet'),
-      network: ClusterNetwork.Testnet,
-    },
-  ]
+  static name = 'Solana Events'
+  /** Shown by wallets as the requesting app link. Replace with the final repo URL before release. */
+  static uri = 'https://github.com/solana-events/solana-events'
+  /** Wallet provider needs an endpoint; the app performs no RPC calls in the MVP. */
+  static chain: Chain = 'devnet'
+  static clusterEndpoint = clusterApiUrl('devnet')
 }

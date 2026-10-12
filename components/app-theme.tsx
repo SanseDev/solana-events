@@ -1,20 +1,8 @@
-import { PropsWithChildren } from 'react'
-import { DarkTheme as AppThemeDark, DefaultTheme as AppThemeLight, ThemeProvider } from '@react-navigation/native'
-import { useColorScheme } from 'react-native'
+import { type PropsWithChildren } from 'react'
+import { ThemeProvider } from '@react-navigation/native'
+import { navTheme } from '@/src/theme'
 
-export function useAppTheme() {
-  const colorScheme = useColorScheme()
-  const isDark = colorScheme === 'dark'
-  const theme = isDark ? AppThemeDark : AppThemeLight
-  return {
-    colorScheme,
-    isDark,
-    theme,
-  }
-}
-
+/** Dark-only MVP: the navigation theme is pinned to the app palette. */
 export function AppTheme({ children }: PropsWithChildren) {
-  const { theme } = useAppTheme()
-
-  return <ThemeProvider value={theme}>{children}</ThemeProvider>
+  return <ThemeProvider value={navTheme}>{children}</ThemeProvider>
 }
