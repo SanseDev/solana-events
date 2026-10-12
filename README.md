@@ -132,7 +132,7 @@ Typecheck, lint, and unit tests must all pass before every commit; `npm run ci` 
 | Storage (favorites, preferences, onboarding)   | unit tests | passing |
 | External links (https-only)                    | unit tests | passing |
 | Calendar service (P1 add-to-calendar)          | unit tests | passing |
-| Catalog integrity (147 tests total, 12 suites) | unit tests | passing |
+| Catalog integrity (150 tests total, 12 suites) | unit tests | passing |
 | Wallet service safety guards                   | unit tests | passing |
 | Seeker device validation                       | manual     | pending |
 | Standard Android device                        | manual     | pending |
@@ -146,7 +146,7 @@ Automated results above were produced by the commands in this README on 2026-10-
 | Item                                                  | Status                                                      |
 | ----------------------------------------------------- | ----------------------------------------------------------- |
 | Android package ID                                    | done — `com.sansedev.solwhere`                              |
-| Automated checks (typecheck, lint, format, 147 tests) | done — 2026-10-11                                           |
+| Automated checks (typecheck, lint, format, 150 tests) | done — 2026-10-11                                           |
 | Android prebuild with final package ID                | done — native files regenerated 2026-10-08                  |
 | EAS APK cloud build                                   | pending — command above; requires `eas-cli` login           |
 | Standard Android device validation                    | pending — checklist in `docs/release-validation.md`         |

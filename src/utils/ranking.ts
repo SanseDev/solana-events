@@ -105,3 +105,26 @@ export function recommendEvents(events: readonly Event[], profile: PreferencePro
       return Date.parse(a.event.startAt) - Date.parse(b.event.startAt)
     })
 }
+
+/**
+ * Split ranked recommendations for the personalized Discover layout:
+ * `forYou` keeps score > 0 entries in personalized order (score desc,
+ * `startAt` asc) with their truthful reasons; `upcoming` is the score === 0
+ * remainder in chronological order. The two sections partition the input
+ * exactly — no duplicates, no dropped events.
+ */
+export function partitionPersonalized(recommendations: readonly EventRecommendation[]): {
+  forYou: EventRecommendation[]
+  upcoming: Event[]
+} {
+  const forYou: EventRecommendation[] = []
+  const upcoming: Event[] = []
+  for (const recommendation of recommendations) {
+    if (recommendation.score > 0) {
+      forYou.push(recommendation)
+    } else {
+      upcoming.push(recommendation.event)
+    }
+  }
+  return { forYou, upcoming }
+}

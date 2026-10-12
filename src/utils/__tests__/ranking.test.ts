@@ -1,6 +1,6 @@
 import { makeFixtureEvent } from '../../domain/event-fixture'
 import type { PreferenceProfile } from '../../domain/event'
-import { emptyProfile, recommendEvents, scoreEvent } from '../ranking'
+import { emptyProfile, partitionPersonalized, recommendEvents, scoreEvent } from '../ranking'
 
 const profile: PreferenceProfile = {
   intent: [],
@@ -144,5 +144,53 @@ describe('recommendEvents', () => {
     const input = [a, b]
     recommendEvents(input, profile)
     expect(input.map((e) => e.id)).toEqual(['fixture-a', 'fixture-b'])
+  })
+})
+
+describe('partitionPersonalized', () => {
+  const matchedEarlier = makeFixtureEvent({
+    id: 'fixture-matched-earlier',
+    topics: ['defi'],
+    startAt: '2026-11-02T18:00:00+01:00',
+    endAt: '2026-11-02T22:00:00+01:00',
+  })
+  const matchedLater = makeFixtureEvent({
+    id: 'fixture-matched-later',
+    topics: ['defi', 'mobile'],
+    startAt: '2026-11-04T18:00:00+01:00',
+    endAt: '2026-11-04T22:00:00+01:00',
+  })
+  const zeroLater = makeFixtureEvent({
+    id: 'fixture-zero-later',
+    topics: ['gaming'],
+    startAt: '2026-11-05T18:00:00+01:00',
+    endAt: '2026-11-05T22:00:00+01:00',
+  })
+  const zeroEarlier = makeFixtureEvent({
+    id: 'fixture-zero-earlier',
+    topics: ['nfts'],
+    startAt: '2026-11-01T18:00:00+01:00',
+    endAt: '2026-11-01T22:00:00+01:00',
+  })
+  const ranked = recommendEvents([zeroLater, matchedLater, zeroEarlier, matchedEarlier], profile)
+
+  it('puts score > 0 events in forYou, preserving personalized ranking and reasons', () => {
+    const { forYou } = partitionPersonalized(ranked)
+    expect(forYou.map((r) => r.event.id)).toEqual(['fixture-matched-later', 'fixture-matched-earlier'])
+    expect(forYou.every((r) => r.score > 0)).toBe(true)
+    expect(forYou.map((r) => r.reasonKeys[0])).toEqual(['topic:defi', 'topic:defi'])
+  })
+
+  it('puts score === 0 events in upcoming, ordered chronologically', () => {
+    const { upcoming } = partitionPersonalized(ranked)
+    expect(upcoming.map((e) => e.id)).toEqual(['fixture-zero-earlier', 'fixture-zero-later'])
+  })
+
+  it('never duplicates or drops events across sections', () => {
+    const { forYou, upcoming } = partitionPersonalized(ranked)
+    const forYouIds = forYou.map((r) => r.event.id)
+    const upcomingIds = upcoming.map((e) => e.id)
+    expect(forYouIds.filter((id) => upcomingIds.includes(id))).toEqual([])
+    expect(new Set([...forYouIds, ...upcomingIds]).size).toBe(ranked.length)
   })
 })

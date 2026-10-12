@@ -19,7 +19,7 @@ import { useFavorites } from '@/src/hooks/useFavorites'
 import { usePreferences } from '@/src/hooks/usePreferences'
 import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS } from '@/src/domain/event'
 import { defaultFiltersForProfile, hasActiveFilters, locationLabel, type EventFilters } from '@/src/domain/filters'
-import { hasPersonalization, recommendEvents } from '@/src/utils/ranking'
+import { hasPersonalization, partitionPersonalized, recommendEvents } from '@/src/utils/ranking'
 import { colors, radius, screenPadding, sectionGap, spacing, touchTarget, typography } from '@/src/theme'
 
 export default function DiscoverScreen() {
@@ -58,7 +58,9 @@ export default function DiscoverScreen() {
   // A stale `personalized` selection (filters changed, matches disappeared)
   // must never render as active while it does nothing.
   const personalizedActive = personalized && canPersonalize
-  // Personalized alone is a real layout: one ranked, duplicate-free list.
+  // Personalized is a real layout: matched events ranked under `For you`,
+  // the score-0 remainder chronological under `Upcoming` — a duplicate-free
+  // partition of the same eligible results.
   const showingResults = filtering || personalizedActive
 
   // Default layout partitions the located catalog without duplicates:
@@ -78,19 +80,19 @@ export default function DiscoverScreen() {
   const matchedIds = useMemo(() => new Set(matched.map((m) => m.event.id)), [matched])
   const upcomingRest = matched.length > 0 ? remainder.filter((event) => !matchedIds.has(event.id)) : remainder
 
-  const results = useMemo(() => {
-    if (!showingResults) {
-      return []
-    }
-    if (personalizedActive) {
-      return rankedResults.map((recommendation) => ({
-        event: recommendation.event,
-        // Truthful reason only when a persisted choice actually matched.
-        reasonKey: recommendation.score > 0 ? recommendation.reasonKeys[0] : undefined,
-      }))
-    }
-    return filtered.map((event) => ({ event, reasonKey: undefined }))
-  }, [showingResults, personalizedActive, rankedResults, filtered])
+  // Personalized layout sections: `For you` keeps ranking + truthful reasons,
+  // `Upcoming` is the chronological nonmatching remainder. Both come from the
+  // same filtered/located set, so search, filters, and location apply to each
+  // and no event can appear twice.
+  const personalizedSections = useMemo(
+    () => (personalizedActive ? partitionPersonalized(rankedResults) : { forYou: [], upcoming: [] }),
+    [personalizedActive, rankedResults],
+  )
+
+  const results = useMemo(
+    () => (showingResults && !personalizedActive ? filtered : []),
+    [showingResults, personalizedActive, filtered],
+  )
 
   const openEvent = (id: string) => router.push(`/event/${id}`)
   const save = (id: string) => toggleFavorite(id)
@@ -193,41 +195,76 @@ export default function DiscoverScreen() {
           />
         ) : showingResults ? (
           <View style={styles.sections}>
-            <View style={styles.section}>
-              <SectionHeader title={filtering ? 'Results' : 'For you'} />
-              {results.length === 0 ? (
-                located.length === 0 ? (
-                  <EmptyState
-                    title="No events for this location"
-                    message="Try another location or clear the location filter."
-                    ctaLabel="Anywhere"
-                    onCta={() => setFilters({ ...filters, location: null } as EventFilters)}
-                  />
+            {personalizedActive ? (
+              <>
+                {personalizedSections.forYou.length > 0 ? (
+                  <View style={styles.section}>
+                    <SectionHeader title="For you" />
+                    {personalizedSections.forYou.map((recommendation) => (
+                      <EventCard
+                        key={recommendation.event.id}
+                        event={recommendation.event}
+                        saved={isFavorite(recommendation.event.id)}
+                        onSave={save}
+                        onOpen={openEvent}
+                        now={now}
+                        reasonKey={recommendation.reasonKeys[0]}
+                      />
+                    ))}
+                  </View>
+                ) : null}
+                {personalizedSections.upcoming.length > 0 ? (
+                  <View style={styles.section}>
+                    <SectionHeader title="Upcoming" />
+                    {personalizedSections.upcoming.map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        saved={isFavorite(event.id)}
+                        onSave={save}
+                        onOpen={openEvent}
+                        now={now}
+                      />
+                    ))}
+                  </View>
+                ) : null}
+              </>
+            ) : (
+              <View style={styles.section}>
+                <SectionHeader title="Results" />
+                {results.length === 0 ? (
+                  located.length === 0 ? (
+                    <EmptyState
+                      title="No events for this location"
+                      message="Try another location or clear the location filter."
+                      ctaLabel="Anywhere"
+                      onCta={() => setFilters({ ...filters, location: null } as EventFilters)}
+                    />
+                  ) : (
+                    <EmptyState
+                      title="No events match these filters"
+                      message="Try removing a filter or clearing your search."
+                      ctaLabel="Clear filters"
+                      onCta={() => {
+                        setQuery('')
+                        clearFilters()
+                      }}
+                    />
+                  )
                 ) : (
-                  <EmptyState
-                    title="No events match these filters"
-                    message="Try removing a filter or clearing your search."
-                    ctaLabel="Clear filters"
-                    onCta={() => {
-                      setQuery('')
-                      clearFilters()
-                    }}
-                  />
-                )
-              ) : (
-                results.map(({ event, reasonKey }) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    saved={isFavorite(event.id)}
-                    onSave={save}
-                    onOpen={openEvent}
-                    now={now}
-                    reasonKey={reasonKey}
-                  />
-                ))
-              )}
-            </View>
+                  results.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      saved={isFavorite(event.id)}
+                      onSave={save}
+                      onOpen={openEvent}
+                      now={now}
+                    />
+                  ))
+                )}
+              </View>
+            )}
           </View>
         ) : (
           <View style={styles.sections}>
