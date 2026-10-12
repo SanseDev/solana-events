@@ -191,16 +191,16 @@ export default function EventDetailScreen() {
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.body}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <AppPressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            style={styles.backButton}
+          >
+            <MaterialIcons name="arrow-back" size={22} color={colors.textPrimary} />
+          </AppPressable>
           <View style={styles.coverWrap}>
             <EventArtwork event={event} variant="cover" />
-            <AppPressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              style={styles.backButton}
-            >
-              <MaterialIcons name="arrow-back" size={22} color={colors.textPrimary} />
-            </AppPressable>
           </View>
           <View style={styles.header}>
             <AppText style={styles.overline}>
@@ -282,12 +282,8 @@ const styles = StyleSheet.create({
   },
   coverWrap: {
     marginHorizontal: -screenPadding,
-    marginTop: -spacing.sm,
   },
   backButton: {
-    position: 'absolute',
-    top: spacing.sm,
-    left: spacing.sm,
     width: touchTarget,
     height: touchTarget,
     borderRadius: touchTarget / 2,

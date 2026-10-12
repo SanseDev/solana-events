@@ -75,6 +75,8 @@ npx expo start --dev-client
 
 This is a custom dev build project — use the development build on a device or emulator, not Expo Go (Mobile Wallet Adapter requires it).
 
+Adding or updating a native dependency (anything with an Android module, e.g. `expo-location`) requires rebuilding and reinstalling the app (`expo run:android` or `npm run android:build` + install). Restarting Metro or clearing its cache only reloads JavaScript — it cannot add native code, so the old binary will fail at startup with "Cannot find native module '…'" and cascading route-export errors.
+
 ## Run on web
 
 ```bash
