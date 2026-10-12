@@ -48,3 +48,6 @@ app-example
 .claude/
 *storybook.log
 storybook-static
+
+/solwhere-event-images
+/pictures
