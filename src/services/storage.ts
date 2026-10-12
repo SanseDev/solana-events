@@ -137,11 +137,15 @@ export async function saveFavorites(ids: string[]): Promise<void> {
 /**
  * Loads the v2 preference profile. When v2 is absent, parses legacy
  * `interests:v1` into a profile, persists it as v2, and keeps v1 intact.
+ * When a stored v2 profile still carries a legacy `{ city, country }`
+ * location, the converted ISO location is persisted back once.
  */
 export async function loadPreferences(): Promise<PreferenceProfile> {
   const stored = await AsyncStorage.getItem(STORAGE_KEYS.preferences)
   if (stored !== null) {
-    return readJson(STORAGE_KEYS.preferences, parseProfile, emptyProfile)
+    const profile = await readJson(STORAGE_KEYS.preferences, parseProfile, emptyProfile)
+    await persistLocationMigration(stored, profile).catch(() => undefined)
+    return profile
   }
   const legacy = await readJson(STORAGE_KEYS.interests, parseInterests, null as Interests | null)
   if (legacy === null) {
@@ -151,6 +155,31 @@ export async function loadPreferences(): Promise<PreferenceProfile> {
   // A failed migration write is not fatal: the next launch migrates again.
   await writeJson(STORAGE_KEYS.preferences, migrated).catch(() => undefined)
   return migrated
+}
+
+/**
+ * Rewrites a stored v2 profile whose location was parsed from the legacy
+ * display-name shape, so storage converges on the ISO-code shape. Skipped
+ * when there is nothing to convert; a failed write is retried next launch.
+ */
+async function persistLocationMigration(stored: string, profile: PreferenceProfile): Promise<void> {
+  if (profile.location === null) {
+    return
+  }
+  let rawLocation: unknown
+  try {
+    const raw = JSON.parse(stored) as { location?: unknown }
+    rawLocation = raw.location
+  } catch {
+    return
+  }
+  if (typeof rawLocation !== 'object' || rawLocation === null) {
+    return
+  }
+  if (typeof (rawLocation as { countryCode?: unknown }).countryCode === 'string') {
+    return
+  }
+  await writeJson(STORAGE_KEYS.preferences, profile)
 }
 
 export async function savePreferences(profile: PreferenceProfile): Promise<void> {

@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { AppText } from '@/components/app-text'
-import { catalogCities, type EventFilters } from '../domain/filters'
+import { catalogCities, clampLocationToCatalog, type EventFilters } from '../domain/filters'
 import type { Event } from '../domain/event'
 import { COUNTRIES, type Country } from '../data/countries'
 import { resolveDeviceLocation } from '../services/deviceLocation'
@@ -74,7 +74,9 @@ function LocationSheetContent({
     const outcome = await resolveDeviceLocation()
     setLocating(false)
     if (outcome.ok) {
-      choose(outcome.location)
+      // A GPS city absent from the catalog would filter everything out;
+      // keep it only when the catalog actually has events for that city.
+      choose(clampLocationToCatalog(events, outcome.location))
     } else {
       setError(
         outcome.reason === 'permission_denied'

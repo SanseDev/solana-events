@@ -2,6 +2,7 @@ import { makeFixtureEvent } from '../event-fixture'
 import { emptyProfile } from '../../utils/ranking'
 import {
   applyFilters,
+  clampLocationToCatalog,
   defaultFiltersForProfile,
   emptyFilters,
   hasActiveFilters,
@@ -301,6 +302,34 @@ describe('defaultFiltersForProfile', () => {
   it('maps in-person participation to in-person + hybrid attendance', () => {
     const filters = defaultFiltersForProfile({ ...emptyProfile, participation: 'in_person' })
     expect(filters.attendance).toEqual(['in_person', 'hybrid'])
+  })
+})
+
+describe('clampLocationToCatalog', () => {
+  const london = makeFixtureEvent({
+    id: 'fixture-london',
+    city: 'London',
+    country: 'United Kingdom',
+    countryCode: 'GB',
+  })
+
+  it('keeps a city the catalog actually has', () => {
+    expect(clampLocationToCatalog([london], { countryCode: 'GB', city: 'London' })).toEqual({
+      countryCode: 'GB',
+      city: 'London',
+    })
+  })
+
+  it('drops a city the catalog lacks, keeping the country', () => {
+    expect(clampLocationToCatalog([london], { countryCode: 'GB', city: 'Croydon' })).toEqual({ countryCode: 'GB' })
+  })
+
+  it('drops the city when the country has no catalog events at all', () => {
+    expect(clampLocationToCatalog([london], { countryCode: 'JP', city: 'Tokyo' })).toEqual({ countryCode: 'JP' })
+  })
+
+  it('passes a country-only selection through unchanged', () => {
+    expect(clampLocationToCatalog([london], { countryCode: 'GB' })).toEqual({ countryCode: 'GB' })
   })
 })
 

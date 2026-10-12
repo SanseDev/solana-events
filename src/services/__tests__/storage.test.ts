@@ -148,6 +148,47 @@ describe('location migration', () => {
     )
     expect((await loadPreferences()).location).toBeNull()
   })
+
+  it('persists the converted ISO location back to storage', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { city: 'London', country: 'United Kingdom' } }),
+    )
+    await loadPreferences()
+    const raw = JSON.parse((await mockStorage().getItem(STORAGE_KEYS.preferences)) ?? 'null')
+    expect(raw.location).toEqual({ countryCode: 'GB', city: 'London' })
+  })
+
+  it('still returns the converted location when the rewrite write fails', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { city: 'London', country: 'United Kingdom' } }),
+    )
+    mockModule().__failKeys.add(STORAGE_KEYS.preferences)
+    expect((await loadPreferences()).location).toEqual({ countryCode: 'GB', city: 'London' })
+  })
+
+  it('does not rewrite a profile that already stores ISO codes', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { countryCode: 'FR' } }),
+    )
+    const spy = jest.spyOn(mockStorage(), 'setItem')
+    await loadPreferences()
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('does not rewrite when the legacy location is invalid', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { city: 'Atlantis', country: 'Atlantis' } }),
+    )
+    const spy = jest.spyOn(mockStorage(), 'setItem')
+    await loadPreferences()
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
 })
 
 describe('v1 interests migration', () => {

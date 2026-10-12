@@ -127,6 +127,8 @@ export function isValidEvent(value: unknown): value is Event {
     return false
   }
   const e = value as Record<string, unknown>
+  const hasPlace = typeof e.city === 'string' || typeof e.country === 'string'
+  const hasValidCode = typeof e.countryCode === 'string' && isCountryCode(e.countryCode)
   return (
     typeof e.id === 'string' &&
     e.id.length > 0 &&
@@ -140,6 +142,9 @@ export function isValidEvent(value: unknown): value is Event {
     !Number.isNaN(Date.parse(e.endAt)) &&
     typeof e.officialSourceUrl === 'string' &&
     e.officialSourceUrl.startsWith('https://') &&
-    (e.countryCode === undefined || (typeof e.countryCode === 'string' && isCountryCode(e.countryCode)))
+    // A located event without a valid ISO code would vanish under location
+    // filtering; online events may omit the code entirely.
+    (!hasPlace || hasValidCode) &&
+    (e.countryCode === undefined || hasValidCode)
   )
 }

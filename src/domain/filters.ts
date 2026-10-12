@@ -143,6 +143,19 @@ export function catalogCities(events: readonly Event[], countryCode: string): st
   return [...cities].sort((a, b) => a.localeCompare(b))
 }
 
+/**
+ * Drops the city when the catalog has no event for it, so a GPS-derived city
+ * never hides the country's valid matches. Country-only selections and known
+ * cities pass through unchanged.
+ */
+export function clampLocationToCatalog(events: readonly Event[], location: LocationPreference): LocationPreference {
+  if (!location.city) {
+    return location
+  }
+  const known = events.some((event) => event.countryCode === location.countryCode && event.city === location.city)
+  return known ? location : { countryCode: location.countryCode }
+}
+
 /** `Anywhere`, `France`, or `Paris, France`. */
 export function locationLabel(location: LocationPreference | null): string {
   if (!location) {
