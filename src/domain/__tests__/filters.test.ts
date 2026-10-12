@@ -1,6 +1,13 @@
 import { makeFixtureEvent } from '../event-fixture'
 import { emptyProfile } from '../../utils/ranking'
-import { applyFilters, defaultFiltersForProfile, emptyFilters, hasActiveFilters, thisWeekWindow } from '../filters'
+import {
+  applyFilters,
+  defaultFiltersForProfile,
+  emptyFilters,
+  hasActiveFilters,
+  locationLabel,
+  thisWeekWindow,
+} from '../filters'
 
 describe('hasActiveFilters', () => {
   it('is false for empty filters', () => {
@@ -8,7 +15,7 @@ describe('hasActiveFilters', () => {
   })
 
   it('is false for location only (location constrains but does not switch layout)', () => {
-    expect(hasActiveFilters({ ...emptyFilters, location: { city: 'London', country: 'United Kingdom' } })).toBe(false)
+    expect(hasActiveFilters({ ...emptyFilters, location: { countryCode: 'GB' } })).toBe(false)
   })
 
   it('is true when topics selected', () => {
@@ -100,22 +107,96 @@ describe('applyFilters', () => {
     expect(result).toEqual([])
   })
 
-  it('filters by exact city + country', () => {
-    const london = makeFixtureEvent({ id: 'fixture-london', city: 'London', country: 'United Kingdom' })
-    const londonUsa = makeFixtureEvent({ id: 'fixture-london-us', city: 'London', country: 'United States' })
+  it('filters by country code + city', () => {
+    const london = makeFixtureEvent({
+      id: 'fixture-london',
+      city: 'London',
+      country: 'United Kingdom',
+      countryCode: 'GB',
+    })
+    const londonUsa = makeFixtureEvent({
+      id: 'fixture-london-us',
+      city: 'London',
+      country: 'United States',
+      countryCode: 'US',
+    })
     const result = applyFilters([london, londonUsa], '', {
       ...emptyFilters,
-      location: { city: 'London', country: 'United Kingdom' },
+      location: { countryCode: 'GB', city: 'London' },
     })
     expect(result.map((e) => e.id)).toEqual(['fixture-london'])
   })
 
-  it('excludes events without a matching location when location is set', () => {
-    const online = makeFixtureEvent({ id: 'fixture-online', city: undefined, country: undefined })
-    const result = applyFilters([online], '', {
-      ...emptyFilters,
-      location: { city: 'London', country: 'United Kingdom' },
+  it('matches every catalog city for a country-only selection', () => {
+    const london = makeFixtureEvent({
+      id: 'fixture-london',
+      city: 'London',
+      country: 'United Kingdom',
+      countryCode: 'GB',
     })
+    const edinburgh = makeFixtureEvent({
+      id: 'fixture-edinburgh',
+      city: 'Edinburgh',
+      country: 'United Kingdom',
+      countryCode: 'GB',
+    })
+    const vegas = makeFixtureEvent({
+      id: 'fixture-vegas',
+      city: 'Las Vegas',
+      country: 'United States',
+      countryCode: 'US',
+    })
+    const result = applyFilters([london, edinburgh, vegas], '', { ...emptyFilters, location: { countryCode: 'GB' } })
+    expect(result.map((e) => e.id)).toEqual(['fixture-london', 'fixture-edinburgh'])
+  })
+
+  it('excludes other cities in the same country on a city selection', () => {
+    const london = makeFixtureEvent({
+      id: 'fixture-london',
+      city: 'London',
+      country: 'United Kingdom',
+      countryCode: 'GB',
+    })
+    const edinburgh = makeFixtureEvent({
+      id: 'fixture-edinburgh',
+      city: 'Edinburgh',
+      country: 'United Kingdom',
+      countryCode: 'GB',
+    })
+    const result = applyFilters([london, edinburgh], '', {
+      ...emptyFilters,
+      location: { countryCode: 'GB', city: 'Edinburgh' },
+    })
+    expect(result.map((e) => e.id)).toEqual(['fixture-edinburgh'])
+  })
+
+  it('Anywhere (null location) keeps all events regardless of place', () => {
+    const london = makeFixtureEvent({
+      id: 'fixture-london',
+      city: 'London',
+      country: 'United Kingdom',
+      countryCode: 'GB',
+    })
+    const online = makeFixtureEvent({
+      id: 'fixture-online',
+      city: undefined,
+      country: undefined,
+      countryCode: undefined,
+    })
+    expect(applyFilters([london, online], '', emptyFilters).map((e) => e.id)).toEqual([
+      'fixture-london',
+      'fixture-online',
+    ])
+  })
+
+  it('excludes events without a country code when location is set', () => {
+    const online = makeFixtureEvent({
+      id: 'fixture-online',
+      city: undefined,
+      country: undefined,
+      countryCode: undefined,
+    })
+    const result = applyFilters([online], '', { ...emptyFilters, location: { countryCode: 'GB' } })
     expect(result).toEqual([])
   })
 
@@ -206,9 +287,9 @@ describe('defaultFiltersForProfile', () => {
   it('seeds the location constraint from the profile', () => {
     const filters = defaultFiltersForProfile({
       ...emptyProfile,
-      location: { city: 'London', country: 'United Kingdom' },
+      location: { countryCode: 'GB', city: 'London' },
     })
-    expect(filters.location).toEqual({ city: 'London', country: 'United Kingdom' })
+    expect(filters.location).toEqual({ countryCode: 'GB', city: 'London' })
     expect(hasActiveFilters(filters)).toBe(false)
   })
 
@@ -220,6 +301,20 @@ describe('defaultFiltersForProfile', () => {
   it('maps in-person participation to in-person + hybrid attendance', () => {
     const filters = defaultFiltersForProfile({ ...emptyProfile, participation: 'in_person' })
     expect(filters.attendance).toEqual(['in_person', 'hybrid'])
+  })
+})
+
+describe('locationLabel', () => {
+  it('formats null as Anywhere', () => {
+    expect(locationLabel(null)).toBe('Anywhere')
+  })
+
+  it('formats a country-only selection as the country name', () => {
+    expect(locationLabel({ countryCode: 'FR' })).toBe('France')
+  })
+
+  it('formats a city selection as `City, Country`', () => {
+    expect(locationLabel({ countryCode: 'FR', city: 'Paris' })).toBe('Paris, France')
   })
 })
 

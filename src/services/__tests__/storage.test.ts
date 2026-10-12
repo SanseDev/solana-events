@@ -76,7 +76,7 @@ describe('preferences storage (v2)', () => {
       topics: ['defi'],
       communityIds: ['superteam'],
       participation: 'online',
-      location: { city: 'London', country: 'United Kingdom' },
+      location: { countryCode: 'GB', city: 'London' },
     } satisfies PreferenceProfile
     await savePreferences(profile)
     expect(await loadPreferences()).toEqual(profile)
@@ -105,6 +105,48 @@ describe('preferences storage (v2)', () => {
   it('treats corrupt v2 JSON as absent', async () => {
     await mockStorage().setItem(STORAGE_KEYS.preferences, 'nope')
     expect(await loadPreferences()).toEqual(emptyProfile)
+  })
+})
+
+describe('location migration', () => {
+  it('maps a legacy { city, country } location to ISO codes', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { city: 'London', country: 'United Kingdom' } }),
+    )
+    expect((await loadPreferences()).location).toEqual({ countryCode: 'GB', city: 'London' })
+  })
+
+  it('drops an invalid legacy location with an unknown country', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { city: 'Atlantis', country: 'Atlantis' } }),
+    )
+    expect((await loadPreferences()).location).toBeNull()
+  })
+
+  it('keeps a country-only preference as-is', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { countryCode: 'FR' } }),
+    )
+    expect((await loadPreferences()).location).toEqual({ countryCode: 'FR' })
+  })
+
+  it('drops an unknown ISO country code', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { countryCode: 'ZZ', city: 'Nowhere' } }),
+    )
+    expect((await loadPreferences()).location).toBeNull()
+  })
+
+  it('drops a location without a country', async () => {
+    await mockStorage().setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ ...emptyProfile, location: { city: 'London' } }),
+    )
+    expect((await loadPreferences()).location).toBeNull()
   })
 })
 

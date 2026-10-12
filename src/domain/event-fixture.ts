@@ -17,6 +17,7 @@ export function makeFixtureEvent(overrides: Partial<Event> = {}): Event {
     attendanceMode: 'in_person',
     city: 'Paris',
     country: 'France',
+    countryCode: 'FR',
     officialSourceUrl: 'https://example.com/fixture',
     lastVerifiedAt: '2026-10-05',
     ...overrides,

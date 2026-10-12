@@ -153,9 +153,11 @@ function FilterSheetContent({
             <FilterChip label="Anywhere" selected={draft.location === null} onPress={() => setLocation(null)} />
             {locations.map((location) => (
               <FilterChip
-                key={`${location.city}-${location.country}`}
+                key={`${location.countryCode}-${location.city ?? ''}`}
                 label={locationLabel(location)}
-                selected={draft.location?.city === location.city && draft.location?.country === location.country}
+                selected={
+                  draft.location?.countryCode === location.countryCode && draft.location?.city === location.city
+                }
                 onPress={() => setLocation(location)}
               />
             ))}

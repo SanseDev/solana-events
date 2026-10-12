@@ -1,4 +1,5 @@
 import type { AttendanceMode, Event, EventFormat, LocationPreference, PreferenceProfile, Topic } from './event'
+import { countryName } from '../data/countries'
 
 export type DateRangeFilter = 'any' | 'this_week'
 
@@ -42,11 +43,22 @@ export function thisWeekWindow(now: Date): { start: number; end: number } {
   return { start: now.getTime(), end: end.getTime() }
 }
 
+/**
+ * Compares ISO country codes only — display names are never filter keys.
+ * Country-only preferences match every catalog city in that country; a city
+ * narrows the match further.
+ */
 function matchesLocation(event: Event, location: LocationPreference | null): boolean {
   if (!location) {
     return true
   }
-  return event.city === location.city && event.country === location.country
+  if (event.countryCode !== location.countryCode) {
+    return false
+  }
+  if (location.city && event.city !== location.city) {
+    return false
+  }
+  return true
 }
 
 /**
@@ -106,20 +118,36 @@ export function defaultFiltersForProfile(profile: PreferenceProfile): EventFilte
   }
 }
 
-/** Distinct catalog `city, country` pairs, alphabetically sorted. */
+/** Distinct catalog city selections (`{ countryCode, city }`), sorted by city. */
 export function distinctLocations(events: readonly Event[]): LocationPreference[] {
   const seen = new Map<string, LocationPreference>()
   for (const event of events) {
-    if (event.city && event.country) {
-      const key = `${event.city}\n${event.country}`
+    if (event.countryCode && event.city) {
+      const key = `${event.city}\n${event.countryCode}`
       if (!seen.has(key)) {
-        seen.set(key, { city: event.city, country: event.country })
+        seen.set(key, { countryCode: event.countryCode, city: event.city })
       }
     }
   }
-  return [...seen.values()].sort((a, b) => a.city.localeCompare(b.city))
+  return [...seen.values()].sort((a, b) => (a.city ?? '').localeCompare(b.city ?? ''))
 }
 
+/** Distinct catalog cities for a country code, alphabetically sorted. */
+export function catalogCities(events: readonly Event[], countryCode: string): string[] {
+  const cities = new Set<string>()
+  for (const event of events) {
+    if (event.countryCode === countryCode && event.city) {
+      cities.add(event.city)
+    }
+  }
+  return [...cities].sort((a, b) => a.localeCompare(b))
+}
+
+/** `Anywhere`, `France`, or `Paris, France`. */
 export function locationLabel(location: LocationPreference | null): string {
-  return location ? location.city : 'Anywhere'
+  if (!location) {
+    return 'Anywhere'
+  }
+  const name = countryName(location.countryCode)
+  return location.city ? `${location.city}, ${name}` : name
 }

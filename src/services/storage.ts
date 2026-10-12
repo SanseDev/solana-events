@@ -10,6 +10,7 @@ import {
   type PreferenceProfile,
   type Topic,
 } from '../domain/event'
+import { countryCodeForName, isCountryCode } from '../data/countries'
 
 /**
  * Versioned storage keys. Bump suffix and add a migration when the shape
@@ -76,15 +77,36 @@ function enumArray<T extends string>(raw: unknown, allowed: readonly T[]): T[] {
   return Array.isArray(raw) ? raw.filter((value): value is T => allowed.includes(value as T)) : []
 }
 
+/**
+ * Accepts the ISO-code shape (`{ countryCode, city? }`) and migrates the
+ * legacy display-name shape (`{ city, country }`) by mapping the country name
+ * to its ISO code. Unknown or invalid locations degrade to null.
+ */
 function parseLocation(raw: unknown): LocationPreference | null {
   if (typeof raw !== 'object' || raw === null) {
     return null
   }
-  const { city, country } = raw as { city?: unknown; country?: unknown }
-  if (typeof city !== 'string' || typeof country !== 'string' || city.length === 0 || country.length === 0) {
-    return null
+  const { countryCode, city, country } = raw as {
+    countryCode?: unknown
+    city?: unknown
+    country?: unknown
   }
-  return { city, country }
+  const hasCity = typeof city === 'string' && city.length > 0
+  if (typeof countryCode === 'string') {
+    const code = countryCode.toUpperCase()
+    if (!isCountryCode(code)) {
+      return null
+    }
+    return hasCity ? { countryCode: code, city: city as string } : { countryCode: code }
+  }
+  if (typeof country === 'string') {
+    const code = countryCodeForName(country)
+    if (code === null) {
+      return null
+    }
+    return hasCity ? { countryCode: code, city: city as string } : { countryCode: code }
+  }
+  return null
 }
 
 function parseProfile(raw: unknown): PreferenceProfile {

@@ -1,3 +1,5 @@
+import { isCountryCode } from '../data/countries'
+
 export type AttendanceMode = 'online' | 'in_person' | 'hybrid'
 
 export type EventFormat = 'hackathon' | 'conference' | 'meetup' | 'workshop' | 'community_event'
@@ -62,8 +64,10 @@ export const PARTICIPATION_LABELS: Record<ParticipationPreference, string> = {
 }
 
 export interface LocationPreference {
-  city: string
-  country: string
+  /** ISO 3166-1 alpha-2 code — the stable filter key, never a display name. */
+  countryCode: string
+  /** Optional city that narrows the country filter. */
+  city?: string
 }
 
 /** Local preference profile persisted under `solana-events:preferences:v2`. */
@@ -92,7 +96,10 @@ export interface Event {
   registrationDeadline?: string
   attendanceMode: AttendanceMode
   city?: string
+  /** Human-readable country label for display. */
   country?: string
+  /** ISO 3166-1 alpha-2 code used for location filtering. */
+  countryCode?: string
   venue?: string
   officialSourceUrl: string
   registrationUrl?: string
@@ -132,6 +139,7 @@ export function isValidEvent(value: unknown): value is Event {
     typeof e.endAt === 'string' &&
     !Number.isNaN(Date.parse(e.endAt)) &&
     typeof e.officialSourceUrl === 'string' &&
-    e.officialSourceUrl.startsWith('https://')
+    e.officialSourceUrl.startsWith('https://') &&
+    (e.countryCode === undefined || (typeof e.countryCode === 'string' && isCountryCode(e.countryCode)))
   )
 }

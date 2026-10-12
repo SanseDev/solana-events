@@ -32,6 +32,12 @@
         }
       ],
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Solwhere to use your location to suggest events near you."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#090D18",
