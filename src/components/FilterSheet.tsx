@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText } from '@/components/app-text'
@@ -14,6 +14,11 @@ import {
 import { FilterChip } from './FilterChip'
 import { colors, radius, spacing } from '../theme'
 
+/**
+ * The sheet content is mounted only while the modal is visible, so the draft
+ * filter state is initialized from the current filters on every open without
+ * needing a setState-in-effect reset.
+ */
 export function FilterSheet({
   visible,
   filters,
@@ -25,14 +30,23 @@ export function FilterSheet({
   onClose: () => void
   onApply: (filters: EventFilters) => void
 }) {
-  const [draft, setDraft] = useState<EventFilters>(filters)
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
+      {visible ? <FilterSheetContent filters={filters} onClose={onClose} onApply={onApply} /> : null}
+    </Modal>
+  )
+}
 
-  // Reset the draft whenever the sheet is opened with the current filters.
-  React.useEffect(() => {
-    if (visible) {
-      setDraft(filters)
-    }
-  }, [visible, filters])
+function FilterSheetContent({
+  filters,
+  onClose,
+  onApply,
+}: {
+  filters: EventFilters
+  onClose: () => void
+  onApply: (filters: EventFilters) => void
+}) {
+  const [draft, setDraft] = useState<EventFilters>(filters)
 
   const toggleTopic = (topic: EventFilters['topics'][number]) =>
     setDraft((d) => ({
@@ -49,75 +63,73 @@ export function FilterSheet({
   const setAttendance = (attendance: AttendanceFilter) => setDraft((d) => ({ ...d, attendance }))
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
-      <View style={styles.backdrop}>
-        <Pressable style={styles.backdropPress} onPress={onClose} accessibilityLabel="Close filters" />
-        <SafeAreaView style={styles.sheet} edges={['bottom']}>
-          <View style={styles.header}>
-            <AppText style={styles.title}>Filters</AppText>
-            <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
-              <Text style={styles.closeText}>Close</Text>
-            </Pressable>
+    <View style={styles.backdrop}>
+      <Pressable style={styles.backdropPress} onPress={onClose} accessibilityLabel="Close filters" />
+      <SafeAreaView style={styles.sheet} edges={['bottom']}>
+        <View style={styles.header}>
+          <AppText style={styles.title}>Filters</AppText>
+          <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
+            <Text style={styles.closeText}>Close</Text>
+          </Pressable>
+        </View>
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentPadding}>
+          <AppText style={styles.sectionLabel}>Topics</AppText>
+          <View style={styles.chipWrap}>
+            {TOPICS.map((topic) => (
+              <FilterChip
+                key={topic}
+                label={TOPIC_LABELS[topic]}
+                selected={draft.topics.includes(topic)}
+                onPress={() => toggleTopic(topic)}
+              />
+            ))}
           </View>
-          <ScrollView style={styles.content} contentContainerStyle={styles.contentPadding}>
-            <AppText style={styles.sectionLabel}>Topics</AppText>
-            <View style={styles.chipWrap}>
-              {TOPICS.map((topic) => (
-                <FilterChip
-                  key={topic}
-                  label={TOPIC_LABELS[topic]}
-                  selected={draft.topics.includes(topic)}
-                  onPress={() => toggleTopic(topic)}
-                />
-              ))}
-            </View>
-            <AppText style={styles.sectionLabel}>Format</AppText>
-            <View style={styles.chipWrap}>
-              {EVENT_FORMATS.map((format) => (
-                <FilterChip
-                  key={format}
-                  label={EVENT_FORMAT_LABELS[format]}
-                  selected={draft.formats.includes(format)}
-                  onPress={() => toggleFormat(format)}
-                />
-              ))}
-            </View>
-            <AppText style={styles.sectionLabel}>Attendance</AppText>
-            <View style={styles.chipWrap}>
-              {(['any', ...ATTENDANCE_MODES] as AttendanceFilter[]).map((mode) => (
-                <FilterChip
-                  key={mode}
-                  label={mode === 'any' ? 'Any' : ATTENDANCE_MODE_LABELS[mode]}
-                  selected={draft.attendance === mode}
-                  onPress={() => setAttendance(mode)}
-                />
-              ))}
-            </View>
-          </ScrollView>
-          <View style={styles.actions}>
-            <Pressable
-              onPress={() => setDraft({ topics: [], formats: [], attendance: 'any' })}
-              accessibilityRole="button"
-              accessibilityLabel="Reset filters"
-              style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
-            >
-              <Text style={styles.secondaryText}>Reset</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                onApply(draft)
-                onClose()
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Show results"
-              style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-            >
-              <Text style={styles.primaryText}>Show results</Text>
-            </Pressable>
+          <AppText style={styles.sectionLabel}>Format</AppText>
+          <View style={styles.chipWrap}>
+            {EVENT_FORMATS.map((format) => (
+              <FilterChip
+                key={format}
+                label={EVENT_FORMAT_LABELS[format]}
+                selected={draft.formats.includes(format)}
+                onPress={() => toggleFormat(format)}
+              />
+            ))}
           </View>
-        </SafeAreaView>
-      </View>
-    </Modal>
+          <AppText style={styles.sectionLabel}>Attendance</AppText>
+          <View style={styles.chipWrap}>
+            {(['any', ...ATTENDANCE_MODES] as AttendanceFilter[]).map((mode) => (
+              <FilterChip
+                key={mode}
+                label={mode === 'any' ? 'Any' : ATTENDANCE_MODE_LABELS[mode]}
+                selected={draft.attendance === mode}
+                onPress={() => setAttendance(mode)}
+              />
+            ))}
+          </View>
+        </ScrollView>
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => setDraft({ topics: [], formats: [], attendance: 'any' })}
+            accessibilityRole="button"
+            accessibilityLabel="Reset filters"
+            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.secondaryText}>Reset</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              onApply(draft)
+              onClose()
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Show results"
+            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.primaryText}>Show results</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </View>
   )
 }
 
