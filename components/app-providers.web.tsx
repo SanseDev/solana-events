@@ -1,5 +1,4 @@
 import { type PropsWithChildren } from 'react'
-import { AppTheme } from '@/components/app-theme'
 import { FavoritesProvider } from '@/src/hooks/useFavorites'
 import { InterestsProvider } from '@/src/hooks/useInterests'
 
@@ -10,10 +9,8 @@ import { InterestsProvider } from '@/src/hooks/useInterests'
  */
 export function AppProviders({ children }: PropsWithChildren) {
   return (
-    <AppTheme>
-      <FavoritesProvider>
-        <InterestsProvider>{children}</InterestsProvider>
-      </FavoritesProvider>
-    </AppTheme>
+    <FavoritesProvider>
+      <InterestsProvider>{children}</InterestsProvider>
+    </FavoritesProvider>
   )
 }
