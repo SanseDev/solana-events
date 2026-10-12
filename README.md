@@ -14,18 +14,22 @@ The catalog ships inside the app: every event is researched and verified against
 - Manual interest preferences with light `For you` ranking.
 - Wallet connection via Mobile Wallet Adapter: authorization only — connect, show public address, copy, disconnect.
 
+## P1 scope
+
+- **Add to calendar** (Android native): from Event Details, copy a verified event into the device's primary writable calendar — title, timezone-correct start/end, all-day span when the source publishes no times, location, and the official URL in the notes. Calendar permission is requested in context at button press; denial, a device without writable calendars, and write failures each show a clear message and never block the catalog. Hidden on web and for ended events.
+
 ## Scope limits (by design)
 
 - No balance, no transactions, no signing, no push, no accounts, no backend, no auth, no database.
 - The wallet flow is authorization-only: it calls MWA `connect()` and never `signIn()`, never requests a message or transaction signature, and never performs an RPC read.
 - Catalog updates ship with app releases — it is a verified snapshot, not a feed.
 - Registration always happens on the official organizer page; this app links out to `https` sources only.
-- Out of P0 scope (not built): add-to-calendar, NFT/collection detection, any backend or payments.
+- Not built: NFT/collection detection, any backend or payments.
 
 ## Future work
 
 - Catalog API to refresh events without an app release.
-- Improved calendar integration (P1 of the implementation plan).
+- Calendar reminders and calendar picker (current P1 writes one event to the primary writable calendar only).
 - Opt-in collection-based community suggestions using verified collection IDs. Not implemented — the app does not read NFT data and never claims to.
 
 ## What it does
@@ -34,6 +38,7 @@ The catalog ships inside the app: every event is researched and verified against
 - **Search and filter** by topic, format, and attendance mode — locally, instantly.
 - **Save events** persistently and keep them across restarts.
 - **For you** ranking from your interest topics and communities.
+- **Add to calendar** on Android from Event Details (P1).
 - **Wallet connect** via Mobile Wallet Adapter (view address only).
 
 ## Architecture
@@ -42,7 +47,7 @@ The catalog ships inside the app: every event is researched and verified against
 app/                  expo-router screens (tabs: Discover, Saved, Profile; event/[id]; interests)
 src/domain/           Event/Community/Interests types, filter logic, fixtures
 src/data/             verified catalog (events.json), communities, catalog accessors
-src/services/         AsyncStorage persistence, external links, wallet session
+src/services/         AsyncStorage persistence, external links, wallet session, calendar
 src/hooks/            Favorites and Interests providers, filter state
 src/components/       EventCard, FilterSheet, WalletStatusCard, shared UI
 src/utils/            dates (timezone-safe string parsing), ranking, event status
@@ -124,7 +129,8 @@ Typecheck, lint, and unit tests must all pass before every commit; `npm run ci` 
 | Date formatting (timezone-safe)               | unit tests | passing |
 | Storage (favorites, interests)                | unit tests | passing |
 | External links (https-only)                   | unit tests | passing |
-| Catalog integrity (80 tests total, 8 suites)  | unit tests | passing |
+| Calendar service (P1 add-to-calendar)         | unit tests | passing |
+| Catalog integrity (94 tests total, 10 suites) | unit tests | passing |
 | Wallet service safety guards                  | unit tests | passing |
 | Seeker device validation                      | manual     | pending |
 | Standard Android device                       | manual     | pending |
@@ -138,7 +144,7 @@ Automated results above were produced by the commands in this README on 2026-10-
 | Item                                                 | Status                                                      |
 | ---------------------------------------------------- | ----------------------------------------------------------- |
 | Android package ID                                   | done — `com.sansedev.solwhere`                              |
-| Automated checks (typecheck, lint, format, 80 tests) | done — 2026-10-08                                           |
+| Automated checks (typecheck, lint, format, 94 tests) | done — 2026-10-08                                           |
 | Android prebuild with final package ID               | done — native files regenerated 2026-10-08                  |
 | EAS APK cloud build                                  | pending — command above; requires `eas-cli` login           |
 | Standard Android device validation                   | pending — checklist in `docs/release-validation.md`         |

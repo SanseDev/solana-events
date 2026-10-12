@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
@@ -9,6 +9,7 @@ import { getEventById } from '@/src/data/eventCatalog'
 import { COMMUNITIES_BY_ID } from '@/src/data/communities'
 import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS } from '@/src/domain/event'
 import { useFavorites } from '@/src/hooks/useFavorites'
+import { addEventToCalendar } from '@/src/services/calendar'
 import { openExternalUrl } from '@/src/services/externalLinks'
 import { formatDateOnlySpan, formatDateTime, formatEventDateRange } from '@/src/utils/dates'
 import { getEventStatus, getRegistrationState } from '@/src/utils/eventStatus'
@@ -36,6 +37,7 @@ export default function EventDetailScreen() {
   const event = useMemo(() => (typeof id === 'string' ? getEventById(id) : undefined), [id])
   const now = useMemo(() => new Date(), [])
   const { isFavorite, toggleFavorite, persistError } = useFavorites()
+  const [calendarState, setCalendarState] = useState<'idle' | 'adding' | 'added'>('idle')
 
   if (!event) {
     return (
@@ -67,6 +69,27 @@ export default function EventDetailScreen() {
     openExternalUrl(url).catch(() => {
       Alert.alert('Could not open link', 'Please try again later.')
     })
+  }
+
+  const onAddToCalendar = async () => {
+    if (calendarState !== 'idle') {
+      return
+    }
+    setCalendarState('adding')
+    const result = await addEventToCalendar(event)
+    setCalendarState(result === 'added' ? 'added' : 'idle')
+    if (result === 'added') {
+      return
+    }
+    if (result === 'permission-denied') {
+      Alert.alert('Calendar access needed', 'Allow calendar access in Android settings to add this event.')
+      return
+    }
+    if (result === 'no-calendar') {
+      Alert.alert('No calendar found', 'Add a calendar account on this device, then try again.')
+      return
+    }
+    Alert.alert('Could not add event', 'Please try again later.')
   }
 
   return (
@@ -162,6 +185,39 @@ export default function EventDetailScreen() {
                 : 'View official source'}
           </Text>
         </Pressable>
+        {status !== 'ended' && Platform.OS !== 'web' ? (
+          <Pressable
+            onPress={onAddToCalendar}
+            accessibilityRole="button"
+            accessibilityLabel={
+              calendarState === 'added'
+                ? 'Added to calendar'
+                : calendarState === 'adding'
+                  ? 'Adding to calendar'
+                  : 'Add to calendar'
+            }
+            accessibilityState={{ disabled: calendarState !== 'idle', busy: calendarState === 'adding' }}
+            disabled={calendarState !== 'idle'}
+            style={({ pressed }) => [
+              detailStyles.outlineButton,
+              calendarState === 'added' ? detailStyles.disabledButton : null,
+              pressed && detailStyles.pressed,
+            ]}
+          >
+            <MaterialIcons
+              name={calendarState === 'added' ? 'check' : 'event'}
+              size={20}
+              color={calendarState === 'added' ? colors.textSecondary : colors.accent}
+            />
+            <Text style={[detailStyles.outlineText, calendarState === 'added' ? detailStyles.disabledText : null]}>
+              {calendarState === 'added'
+                ? 'Added to calendar'
+                : calendarState === 'adding'
+                  ? 'Adding…'
+                  : 'Add to calendar'}
+            </Text>
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => openLink(event.officialSourceUrl, () => undefined)}
           accessibilityRole="button"

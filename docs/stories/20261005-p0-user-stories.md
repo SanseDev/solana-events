@@ -51,3 +51,11 @@ type: user-stories
 ## Platform availability (2026-10-06)
 
 All Discovery, Event details, Saving, and Personalization stories also run on web (`npx expo start --web`, Metro static output). On web the wallet story renders an informational "Wallet unavailable on web" card — MWA requires the Android app with a native wallet such as Seeker or Phantom; interests and saved events work without one (`src/services/wallet.web.ts`, `components/app-providers.web.tsx`). See `docs/specs/20261006-web-platform-support.md`.
+
+## Calendar (P1, 2026-10-08)
+
+**Story**: As an attendee, I add a verified event to my device calendar from Event Details, so I get the correct time in my own schedule without retyping anything.
+
+- Acceptance: `Add to calendar` secondary button (hidden for ended events and on web); permission requested at button press; writes title, offset-explicit start/end as epochs, `allDay` for date-only events, location (`Online` fallback), and notes carrying the official `https` URL to the primary writable calendar (first writable as fallback); `permission-denied`, `no-calendar`, and `error` each show a clear message without blocking the catalog; inline confirmation once added.
+- Implemented in: `app/event/[id].tsx`, `src/services/calendar.ts` + `calendar.web.ts` (tested), `src/services/__tests__/calendar.test.ts`.
+- See `docs/specs/20261008-p1-add-to-calendar.md`.

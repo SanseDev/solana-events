@@ -26,6 +26,12 @@
       "expo-font",
       "expo-router",
       [
+        "expo-calendar",
+        {
+          "calendarPermission": "Allow Solana Events to add events you choose to your calendar."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#0B1020",
