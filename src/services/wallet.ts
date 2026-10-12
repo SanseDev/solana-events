@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
-import { AppConfig } from '@/constants/app-config'
 
 export type WalletStatus = 'unsupported' | 'disconnected' | 'connecting' | 'connected'
 
@@ -19,9 +18,13 @@ export interface WalletSession {
 /**
  * Single adapter to the starter's Mobile Wallet Adapter layer.
  * Screens must use this hook, never `useMobileWallet` directly (plan §4).
+ *
+ * Authorization-only (plan §8): `connect()` requests the standard MWA
+ * authorization and nothing more — no sign-in payload, no message or
+ * transaction signatures, no balance reads, no RPC calls.
  */
 export function useWalletSession(): WalletSession {
-  const { accounts, account, signIn, disconnect } = useMobileWallet()
+  const { accounts, account, connect: connectWallet, disconnect } = useMobileWallet()
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,7 +35,7 @@ export function useWalletSession(): WalletSession {
     setConnecting(true)
     setError(null)
     try {
-      await signIn({ uri: AppConfig.uri })
+      await connectWallet()
     } catch (cause) {
       setError(
         cause instanceof Error && cause.message
@@ -42,7 +45,7 @@ export function useWalletSession(): WalletSession {
     } finally {
       setConnecting(false)
     }
-  }, [signIn])
+  }, [connectWallet])
 
   const disconnectWallet = useCallback(async () => {
     setError(null)
