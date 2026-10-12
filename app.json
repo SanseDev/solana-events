@@ -34,7 +34,9 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow Solwhere to use your location to suggest events near you."
+          "locationWhenInUsePermission": "Allow Solwhere to use your location to suggest events near you.",
+          "locationAlwaysPermission": false,
+          "locationAlwaysAndWhenInUsePermission": false
         }
       ],
       [
