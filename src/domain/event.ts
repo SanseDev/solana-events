@@ -63,6 +63,8 @@ export interface Event {
   registrationUrl?: string
   /** Date the organizer page was manually checked, `YYYY-MM-DD`. */
   lastVerifiedAt: string
+  /** True when the official source publishes dates without times. */
+  allDay?: boolean
   image?: string
 }
 
