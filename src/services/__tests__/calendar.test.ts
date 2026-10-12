@@ -81,6 +81,13 @@ describe('addEventToCalendar result contract', () => {
     expect(getCalendars).not.toHaveBeenCalled()
   })
 
+  it('returns error instead of rejecting when the permission request itself fails', async () => {
+    ;(requestCalendarPermissions as jest.Mock).mockRejectedValue(new Error('permissions module crashed'))
+    const result = await addEventToCalendar(makeFixtureEvent())
+    expect(result).toBe('error')
+    expect(getCalendars).not.toHaveBeenCalled()
+  })
+
   it('returns no-calendar when the calendar list cannot be read', async () => {
     granted()
     ;(getCalendars as jest.Mock).mockRejectedValue(new Error('provider unavailable'))

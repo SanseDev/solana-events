@@ -32,7 +32,12 @@ export function buildCalendarDetails(event: Event): Partial<Calendar.ModifiableE
  * (spec 20261008-p1-add-to-calendar).
  */
 export async function addEventToCalendar(event: Event): Promise<CalendarAddResult> {
-  const permission = await Calendar.requestCalendarPermissions()
+  let permission: Awaited<ReturnType<typeof Calendar.requestCalendarPermissions>>
+  try {
+    permission = await Calendar.requestCalendarPermissions()
+  } catch {
+    return 'error'
+  }
   if (!permission.granted) {
     return 'permission-denied'
   }
