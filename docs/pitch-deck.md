@@ -44,7 +44,7 @@
 
 - P0 (done, code-complete): verified discovery, offline persistence, MWA connect.
 - P1: calendar integration (explicitly out of this release).
-- Future: NFT ticketing — stated as future work only; no mock claims.
+- Future: opt-in collection-based community suggestions using verified collection IDs — future work only; not implemented, and no NFT reads, detection, ticketing, claims, or mockups exist.
 - Fit: mobile track (native Android + Seeker), security posture (authorization-only), verifiable scope (every event URL test-verified).
 
 ## Export checklist

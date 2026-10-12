@@ -22,7 +22,7 @@ Wallet layer: `@wallet-ui/react-native-web3js` ^4.0.1 (resolved 4.3.0; Mobile Wa
 Storage: `@react-native-async-storage/async-storage` 2.2.0.
 Navigation: `expo-router` (file-based, single navigation solution).
 
-Android package still `com.anonymous.solana_events_app` — final package ID is a pending owner decision (it cannot change after Play Store release).
+Android package ID: `com.sansedev.solwhere` (final). The package ID is difficult to change after first store publication.
 
 ## History — Milestone 0 scaffold, recorded 2026-10-05
 

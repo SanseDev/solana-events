@@ -10,13 +10,13 @@ milestone: P0 release (plan §13, §14)
 
 ## Summary
 
-Final release-identity and submission groundwork: the Android package ID was owner-approved and applied (`com.sansedev.solwhere`), release configuration was verified to produce an installable APK, all automated gates were re-run, and the truth-tracking artifacts for hardware validation, demo video, and pitch deck were created with every unperformed item marked `pending`. No APK build, device test, screenshot, video, or deck export is claimed — none has happened.
+Final release-identity and submission groundwork: the Android package ID was set to `com.sansedev.solwhere`, release configuration was verified to produce an installable APK, all automated gates were re-run, and the truth-tracking artifacts for hardware validation, demo video, and pitch deck were created with every unperformed item marked `pending`. No APK build, device test, screenshot, video, or deck export is claimed — none has happened.
 
 ## Decisions
 
 | Item                | Choice                                                                                    | Rationale                                                                                            |
 | ------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Android package ID  | `com.sansedev.solwhere` (owner choice over suggested `com.sansedev.solanaevents`)         | Immutable after Play Store publication; resolved the blocker recorded in `20261008-p0-hardening.md`. |
+| Android package ID  | `com.sansedev.solwhere`                                                                   | Immutable after Play Store publication; resolved the blocker recorded in `20261008-p0-hardening.md`. |
 | APK channel         | EAS cloud build, `preview` profile (`distribution: internal`, `android.buildType: "apk"`) | Universal APK installable on any Android device incl. Seeker; no store submission.                   |
 | Production profile  | Untouched; no `eas submit` run                                                            | Release plan forbids submission without explicit approval.                                           |
 | EAS build execution | Stopped before build: no `eas-cli` session exists (`~/.eas-cli` absent)                   | Auth check must not open browsers or change state; exact command handed to owner.                    |
@@ -27,7 +27,7 @@ Final release-identity and submission groundwork: the Android package ID was own
 
 ```mermaid
 flowchart TD
-    A[Package ID approved<br/>com.sansedev.solwhere] --> B[app.json updated]
+    A[Package ID set<br/>com.sansedev.solwhere] --> B[app.json updated]
     B --> C[expo prebuild -p android<br/>namespace + applicationId synced]
     C --> D[Gates: typecheck, lint,<br/>format, 80 tests --runInBand]
     D --> E{eas-cli session exists?}

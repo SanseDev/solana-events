@@ -84,7 +84,7 @@ npx eas-cli@latest build -p android --profile preview
 
 The `preview` profile in `eas.json` sets `android.buildType: "apk"`, producing a universal APK installable on any Android device including the Seeker.
 
-Release identity: Android package ID `com.sansedev.solwhere` (owner-approved 2026-10-08; fixed before first store publication).
+Android package ID selected for this release: `com.sansedev.solwhere`.
 
 **Build status: no EAS cloud build has been run yet.** As of 2026-10-08 no EAS CLI login session exists on the development machine, so the build above is the exact next command to run. No APK artifact exists until that build succeeds — status will be recorded here and in `docs/release-validation.md`.
 
