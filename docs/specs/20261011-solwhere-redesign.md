@@ -1,7 +1,7 @@
 ---
 title: Solwhere Redesign — Design System, Discover, Preferences, Onboarding
 date: 2026-10-11
-status: in-progress
+status: implemented
 type: feature-spec
 milestone: M1–M3 core redesign
 source: docs/solwhere-redesign-implementation-plan.md
