@@ -48,3 +48,28 @@ export function formatEventDateRange(startIso: string, endIso: string, timezoneL
 export function isBefore(iso: string, thanIso: string): boolean {
   return parseInstant(iso) < parseInstant(thanIso)
 }
+
+/** Single datetime with timezone label, e.g. `1 Nov 2026, 23:59 CET`. */
+export function formatDateTime(iso: string, timezoneLabel: string): string {
+  const parts = toLocalParts(iso)
+  return `${Number(parts.day)} ${MONTHS_SHORT[Number(parts.month) - 1]} ${parts.year}, ${parts.time} ${timezoneLabel}`
+}
+
+function dateLabel(parts: { year: string; month: string; day: string }): string {
+  return `${parts.day} ${MONTHS_SHORT[Number(parts.month) - 1]} ${parts.year}`
+}
+
+/** Date-only span for events without published times, e.g. `15–17 Nov 2026`. */
+export function formatDateOnlySpan(startIso: string, endIso: string): string {
+  const start = toLocalParts(startIso)
+  const end = toLocalParts(endIso)
+  const sameDay = start.year === end.year && start.month === end.month && start.day === end.day
+  if (sameDay) {
+    return dateLabel(start)
+  }
+  const sameMonthAndYear = start.year === end.year && start.month === end.month
+  if (sameMonthAndYear) {
+    return `${start.day}–${end.day} ${MONTHS_SHORT[Number(start.month) - 1]} ${start.year}`
+  }
+  return `${start.day} ${MONTHS_SHORT[Number(start.month) - 1]} – ${dateLabel(end)}`
+}

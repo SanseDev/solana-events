@@ -1,4 +1,11 @@
-import { formatDateBlock, formatEventDateRange, isBefore, parseInstant } from '../dates'
+import {
+  formatDateBlock,
+  formatDateOnlySpan,
+  formatDateTime,
+  formatEventDateRange,
+  isBefore,
+  parseInstant,
+} from '../dates'
 
 describe('parseInstant', () => {
   it('parses ISO 8601 with offset to epoch milliseconds', () => {
@@ -37,5 +44,25 @@ describe('isBefore', () => {
   it('compares an ISO instant against another', () => {
     expect(isBefore('2026-11-10T18:00:00+01:00', '2026-11-10T19:00:00+01:00')).toBe(true)
     expect(isBefore('2026-11-10T19:00:00+01:00', '2026-11-10T18:00:00+01:00')).toBe(false)
+  })
+})
+
+describe('formatDateOnlySpan', () => {
+  it('formats a single all-day date without a time', () => {
+    expect(formatDateOnlySpan('2026-11-12T00:00:00+00:00', '2026-11-12T00:00:00+00:00')).toBe('12 Nov 2026')
+  })
+
+  it('formats a multi-day all-day span without times', () => {
+    expect(formatDateOnlySpan('2026-11-15T00:00:00+00:00', '2026-11-17T00:00:00+00:00')).toBe('15–17 Nov 2026')
+  })
+
+  it('spans across month boundary', () => {
+    expect(formatDateOnlySpan('2026-10-19T00:00:00-03:00', '2026-11-11T00:00:00-03:00')).toBe('19 Oct – 11 Nov 2026')
+  })
+})
+
+describe('formatDateTime', () => {
+  it('formats a single datetime with timezone label', () => {
+    expect(formatDateTime('2026-11-01T23:59:00+01:00', 'CET')).toBe('1 Nov 2026, 23:59 CET')
   })
 })
