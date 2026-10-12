@@ -15,7 +15,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0B1020"
       },
-      "package": "com.anonymous.solana_events_app"
+      "package": "com.sansedev.solwhere"
     },
     "web": {
       "bundler": "metro",
