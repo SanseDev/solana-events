@@ -1,11 +1,26 @@
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const
+export const MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const
+
+export const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
 /** Parses an ISO 8601 string with offset to epoch milliseconds (NaN when invalid). */
 export function parseInstant(iso: string): number {
   return Date.parse(iso)
 }
 
-interface EventLocalDate {
+export interface EventLocalDate {
   year: string
   month: string
   day: string
@@ -16,7 +31,7 @@ interface EventLocalDate {
  * Extracts date/time parts from the ISO string itself so display always uses the
  * event's own timezone (with offset), never the device timezone.
  */
-function toLocalParts(iso: string): EventLocalDate {
+export function toLocalParts(iso: string): EventLocalDate {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/.exec(iso)
   if (!match) {
     throw new Error(`Invalid event ISO date: ${iso}`)

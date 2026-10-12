@@ -1,33 +1,138 @@
 import React, { useMemo, useState } from 'react'
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { AppText } from '@/components/app-text'
 import { EmptyState } from '@/src/components/EmptyState'
+import { EventArtwork } from '@/src/components/EventArtwork'
+import { AppPressable, pressedBackground } from '@/src/components/ui/AppPressable'
 import { getEventById } from '@/src/data/eventCatalog'
 import { COMMUNITIES_BY_ID } from '@/src/data/communities'
-import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS } from '@/src/domain/event'
+import { ATTENDANCE_MODE_LABELS, EVENT_FORMAT_LABELS, TOPIC_LABELS, type Event } from '@/src/domain/event'
 import { useFavorites } from '@/src/hooks/useFavorites'
 import { addEventToCalendar } from '@/src/services/calendar'
 import { openExternalUrl } from '@/src/services/externalLinks'
 import { formatDateOnlySpan, formatDateTime, formatEventDateRange } from '@/src/utils/dates'
 import { getEventStatus, getRegistrationState } from '@/src/utils/eventStatus'
-import { colors, radius, spacing } from '@/src/theme'
+import { selectionFeedback } from '@/src/utils/haptics'
+import { colors, primaryHeight, radius, screenPadding, spacing, touchTarget, typography } from '@/src/theme'
 
-function MetaBlock({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+function InfoBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <View style={detailStyles.block}>
-      <AppText style={detailStyles.blockLabel}>{label}</AppText>
-      <AppText style={[detailStyles.blockValue, valueColor ? { color: valueColor } : null]}>{value}</AppText>
+    <View style={styles.block}>
+      <AppText style={styles.blockLabel}>{label}</AppText>
+      {children}
     </View>
   )
 }
 
-function Badge({ text }: { text: string }) {
+function StaticChip({ text }: { text: string }) {
   return (
-    <View style={detailStyles.badge}>
-      <Text style={detailStyles.badgeText}>{text}</Text>
+    <View style={styles.staticChip}>
+      <AppText style={styles.staticChipText}>{text}</AppText>
+    </View>
+  )
+}
+
+/** Persistent bottom bar: primary registration/source action above Save + calendar. */
+function ActionBar({
+  event,
+  registration,
+  saved,
+  calendarState,
+  onSave,
+  onAddToCalendar,
+}: {
+  event: Event
+  registration: ReturnType<typeof getRegistrationState>
+  saved: boolean
+  calendarState: 'idle' | 'adding' | 'added'
+  onSave: () => void
+  onAddToCalendar: () => void
+}) {
+  const insets = useSafeAreaInsets()
+  const registrationClosed = registration === 'closed'
+  const calendarEligible = getEventStatus(event, new Date()) !== 'ended' && Platform.OS !== 'web'
+  const primaryLabel = registrationClosed
+    ? 'Registration closed'
+    : event.registrationUrl
+      ? 'Register'
+      : 'View official source'
+
+  const onPrimary = () => {
+    const url = event.registrationUrl ?? event.officialSourceUrl
+    openExternalUrl(url).catch(() => {
+      Alert.alert('Could not open link', 'Please try again later.')
+    })
+  }
+
+  return (
+    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
+      <AppPressable
+        onPress={onPrimary}
+        accessibilityRole="button"
+        accessibilityLabel={primaryLabel}
+        disabled={registrationClosed}
+        style={({ pressed }) => [
+          styles.primaryButton,
+          pressed && styles.primaryPressed,
+          registrationClosed && styles.primaryDisabled,
+        ]}
+      >
+        <AppText style={[styles.primaryText, registrationClosed ? styles.primaryTextDisabled : null]}>
+          {primaryLabel}
+        </AppText>
+      </AppPressable>
+      <View style={styles.secondaryRow}>
+        <AppPressable
+          onPress={() => {
+            selectionFeedback()
+            onSave()
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? 'Unsave event' : 'Save event'}
+          style={({ pressed }) => [styles.secondaryButton, pressed && pressedBackground]}
+        >
+          <MaterialIcons
+            name={saved ? 'bookmark' : 'bookmark-border'}
+            size={20}
+            color={saved ? colors.accent : colors.textSecondary}
+          />
+          <AppText style={[styles.secondaryText, saved && styles.secondaryTextActive]}>
+            {saved ? 'Saved' : 'Save'}
+          </AppText>
+        </AppPressable>
+        {calendarEligible ? (
+          <AppPressable
+            onPress={onAddToCalendar}
+            accessibilityRole="button"
+            accessibilityLabel={
+              calendarState === 'added'
+                ? 'Added to calendar'
+                : calendarState === 'adding'
+                  ? 'Adding to calendar'
+                  : 'Add to calendar'
+            }
+            accessibilityState={{ disabled: calendarState !== 'idle', busy: calendarState === 'adding' }}
+            disabled={calendarState !== 'idle'}
+            style={({ pressed }) => [styles.secondaryButton, pressed && pressedBackground]}
+          >
+            <MaterialIcons
+              name={calendarState === 'added' ? 'check' : 'event'}
+              size={20}
+              color={calendarState === 'added' ? colors.success : colors.textSecondary}
+            />
+            <AppText style={styles.secondaryText}>
+              {calendarState === 'added'
+                ? 'Added to calendar'
+                : calendarState === 'adding'
+                  ? 'Adding…'
+                  : 'Add to calendar'}
+            </AppText>
+          </AppPressable>
+        ) : null}
+      </View>
     </View>
   )
 }
@@ -41,7 +146,7 @@ export default function EventDetailScreen() {
 
   if (!event) {
     return (
-      <SafeAreaView style={detailStyles.root} edges={['top']}>
+      <SafeAreaView style={styles.root} edges={['top']}>
         <EmptyState
           title="Event not found"
           message="This event is no longer in the catalog."
@@ -60,16 +165,6 @@ export default function EventDetailScreen() {
     : formatEventDateRange(event.startAt, event.endAt, event.timezoneLabel)
   const place =
     event.attendanceMode === 'online' ? 'Online' : [event.venue, event.city, event.country].filter(Boolean).join(', ')
-
-  const openLink = (url: string | undefined, fallback: () => void) => {
-    if (!url) {
-      fallback()
-      return
-    }
-    openExternalUrl(url).catch(() => {
-      Alert.alert('Could not open link', 'Please try again later.')
-    })
-  }
 
   const onAddToCalendar = async () => {
     if (calendarState !== 'idle') {
@@ -93,194 +188,129 @@ export default function EventDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={detailStyles.root} edges={['top']}>
-      <ScrollView contentContainerStyle={detailStyles.content} keyboardShouldPersistTaps="handled">
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          style={({ pressed }) => [detailStyles.backButton, pressed && detailStyles.pressed]}
-        >
-          <MaterialIcons name="arrow-back" size={22} color={colors.textPrimary} />
-        </Pressable>
-        <View style={detailStyles.hero}>
-          <AppText style={detailStyles.title}>{event.title}</AppText>
-          <AppText style={detailStyles.organizer}>{event.organizer}</AppText>
-          <View style={detailStyles.badgeRow}>
-            <Badge text={EVENT_FORMAT_LABELS[event.format]} />
-            <Badge text={ATTENDANCE_MODE_LABELS[event.attendanceMode]} />
-            {status === 'ended' ? <Badge text="Ended" /> : null}
-            {status === 'ongoing' ? <Badge text="Happening now" /> : null}
+    <SafeAreaView style={styles.root} edges={['top']}>
+      <View style={styles.body}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={styles.coverWrap}>
+            <EventArtwork event={event} variant="cover" />
+            <AppPressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              style={styles.backButton}
+            >
+              <MaterialIcons name="arrow-back" size={22} color={colors.textPrimary} />
+            </AppPressable>
           </View>
-        </View>
-        {persistError ? <AppText style={detailStyles.persistError}>{persistError}</AppText> : null}
-        <MetaBlock label="When" value={dateText} />
-        {event.registrationDeadline ? (
-          <MetaBlock
-            label="Registration deadline"
-            value={formatDateTime(event.registrationDeadline, event.timezoneLabel)}
-            valueColor={registration === 'closed' ? colors.danger : colors.warning}
-          />
-        ) : null}
-        <MetaBlock label="Where" value={place} />
-        <View style={detailStyles.block}>
-          <AppText style={detailStyles.blockLabel}>About</AppText>
-          <AppText style={detailStyles.description}>{event.description}</AppText>
-        </View>
-        <View style={detailStyles.block}>
-          <AppText style={detailStyles.blockLabel}>Topics</AppText>
-          <View style={detailStyles.chipWrap}>
-            {event.topics.map((topic) => (
-              <View key={topic} style={detailStyles.staticChip}>
-                <Text style={detailStyles.staticChipText}>{TOPIC_LABELS[topic]}</Text>
-              </View>
-            ))}
+          <View style={styles.header}>
+            <AppText style={styles.overline}>
+              {EVENT_FORMAT_LABELS[event.format].toUpperCase()} ·{' '}
+              {ATTENDANCE_MODE_LABELS[event.attendanceMode].toUpperCase()}
+            </AppText>
+            <AppText style={styles.title}>{event.title}</AppText>
+            <AppText style={styles.organizer}>{event.organizer}</AppText>
           </View>
-        </View>
-        {event.communityIds.length > 0 ? (
-          <View style={detailStyles.block}>
-            <AppText style={detailStyles.blockLabel}>Communities</AppText>
-            <View style={detailStyles.chipWrap}>
-              {event.communityIds.map((communityId) => (
-                <View key={communityId} style={detailStyles.staticChip}>
-                  <Text style={detailStyles.staticChipText}>
-                    {COMMUNITIES_BY_ID.get(communityId)?.name ?? communityId}
-                  </Text>
-                </View>
+          {persistError ? <AppText style={styles.persistError}>{persistError}</AppText> : null}
+          <InfoBlock label="When">
+            <AppText style={styles.blockValue}>{dateText}</AppText>
+          </InfoBlock>
+          {event.registrationDeadline ? (
+            <InfoBlock label="Registration deadline">
+              <AppText
+                style={[
+                  styles.blockValue,
+                  registration === 'closed' ? { color: colors.danger } : { color: colors.warning },
+                ]}
+              >
+                {formatDateTime(event.registrationDeadline, event.timezoneLabel)}
+              </AppText>
+            </InfoBlock>
+          ) : null}
+          <InfoBlock label="Where">
+            <AppText style={styles.blockValue}>{place}</AppText>
+          </InfoBlock>
+          <InfoBlock label="About">
+            <AppText style={styles.description}>{event.description}</AppText>
+          </InfoBlock>
+          <InfoBlock label="Topics">
+            <View style={styles.chipWrap}>
+              {event.topics.map((topic) => (
+                <StaticChip key={topic} text={TOPIC_LABELS[topic]} />
               ))}
             </View>
-          </View>
-        ) : null}
-        <AppText style={detailStyles.verified}>Details verified on {event.lastVerifiedAt}.</AppText>
-        <Pressable
-          onPress={() => toggleFavorite(event.id)}
-          accessibilityRole="button"
-          accessibilityLabel={saved ? 'Unsave event' : 'Save event'}
-          style={({ pressed }) => [detailStyles.primaryButton, pressed && detailStyles.pressed]}
-        >
-          <MaterialIcons name={saved ? 'bookmark' : 'bookmark-border'} size={20} color="#FFFFFF" />
-          <Text style={detailStyles.primaryText}>{saved ? 'Saved' : 'Save event'}</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => openLink(event.registrationUrl ?? event.officialSourceUrl, () => undefined)}
-          accessibilityRole="button"
-          accessibilityLabel={event.registrationUrl ? 'Register' : 'View official source'}
-          disabled={registration === 'closed' && Boolean(event.registrationUrl)}
-          style={({ pressed }) => [
-            detailStyles.outlineButton,
-            pressed && detailStyles.pressed,
-            registration === 'closed' && event.registrationUrl ? detailStyles.disabledButton : null,
-          ]}
-        >
-          <Text
-            style={[
-              detailStyles.outlineText,
-              registration === 'closed' && event.registrationUrl ? detailStyles.disabledText : null,
-            ]}
-          >
-            {registration === 'closed' && event.registrationUrl
-              ? 'Registration closed'
-              : event.registrationUrl
-                ? 'Register'
-                : 'View official source'}
-          </Text>
-        </Pressable>
-        {status !== 'ended' && Platform.OS !== 'web' ? (
-          <Pressable
-            onPress={onAddToCalendar}
-            accessibilityRole="button"
-            accessibilityLabel={
-              calendarState === 'added'
-                ? 'Added to calendar'
-                : calendarState === 'adding'
-                  ? 'Adding to calendar'
-                  : 'Add to calendar'
-            }
-            accessibilityState={{ disabled: calendarState !== 'idle', busy: calendarState === 'adding' }}
-            disabled={calendarState !== 'idle'}
-            style={({ pressed }) => [
-              detailStyles.outlineButton,
-              calendarState === 'added' ? detailStyles.disabledButton : null,
-              pressed && detailStyles.pressed,
-            ]}
-          >
-            <MaterialIcons
-              name={calendarState === 'added' ? 'check' : 'event'}
-              size={20}
-              color={calendarState === 'added' ? colors.textSecondary : colors.accent}
-            />
-            <Text style={[detailStyles.outlineText, calendarState === 'added' ? detailStyles.disabledText : null]}>
-              {calendarState === 'added'
-                ? 'Added to calendar'
-                : calendarState === 'adding'
-                  ? 'Adding…'
-                  : 'Add to calendar'}
-            </Text>
-          </Pressable>
-        ) : null}
-        <Pressable
-          onPress={() => openLink(event.officialSourceUrl, () => undefined)}
-          accessibilityRole="button"
-          accessibilityLabel="Official source"
-          style={({ pressed }) => [detailStyles.ghostButton, pressed && detailStyles.pressed]}
-        >
-          <Text style={detailStyles.ghostText}>Official source</Text>
-        </Pressable>
-      </ScrollView>
+          </InfoBlock>
+          {event.communityIds.length > 0 ? (
+            <InfoBlock label="Communities">
+              <View style={styles.chipWrap}>
+                {event.communityIds.map((communityId) => (
+                  <StaticChip key={communityId} text={COMMUNITIES_BY_ID.get(communityId)?.name ?? communityId} />
+                ))}
+              </View>
+            </InfoBlock>
+          ) : null}
+          <AppText style={styles.verified}>
+            Details verified on {event.lastVerifiedAt}.
+            {status === 'ended' ? ' This event has ended.' : status === 'ongoing' ? ' Happening now.' : ''}
+          </AppText>
+        </ScrollView>
+        <ActionBar
+          event={event}
+          registration={registration}
+          saved={saved}
+          calendarState={calendarState}
+          onSave={() => toggleFavorite(event.id)}
+          onAddToCalendar={onAddToCalendar}
+        />
+      </View>
     </SafeAreaView>
   )
 }
 
-const detailStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.canvas,
   },
+  body: {
+    flex: 1,
+  },
   content: {
-    padding: spacing.base,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: screenPadding,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
+  coverWrap: {
+    marginHorizontal: -screenPadding,
+    marginTop: -spacing.sm,
+  },
   backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'flex-start',
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    width: touchTarget,
+    height: touchTarget,
+    borderRadius: touchTarget / 2,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: -spacing.sm,
-  },
-  hero: {
-    gap: spacing.sm,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 34,
-  },
-  organizer: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.canvasRaised,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  badgeText: {
+  header: {
+    gap: spacing.xs,
+  },
+  overline: {
+    color: colors.accent,
+    ...typography.overline,
+  },
+  title: {
+    color: colors.textPrimary,
+    ...typography.detailTitle,
+  },
+  organizer: {
     color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
+    ...typography.bodyCompact,
   },
   block: {
     gap: spacing.xs,
@@ -292,17 +322,17 @@ const detailStyles = StyleSheet.create({
   },
   blockLabel: {
     color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
+    ...typography.overline,
   },
   blockValue: {
     color: colors.textPrimary,
+    ...typography.body,
     fontSize: 15,
     lineHeight: 22,
   },
   description: {
     color: colors.textPrimary,
+    ...typography.body,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -314,72 +344,80 @@ const detailStyles = StyleSheet.create({
   staticChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
   staticChipText: {
     color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
+    ...typography.label,
   },
   verified: {
-    color: colors.textSecondary,
+    color: colors.textTertiary,
+    ...typography.label,
     fontSize: 12,
     lineHeight: 16,
   },
   persistError: {
     color: colors.warning,
-    fontSize: 13,
-    lineHeight: 18,
+    ...typography.label,
+  },
+  bar: {
+    paddingHorizontal: screenPadding,
+    paddingTop: spacing.sm,
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+    backgroundColor: colors.canvasRaised,
   },
   primaryButton: {
-    minHeight: 48,
+    minHeight: primaryHeight,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryPressed: {
+    backgroundColor: colors.accentPressed,
+  },
+  primaryDisabled: {
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  primaryText: {
+    color: colors.onAccent,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 22,
+  },
+  primaryTextDisabled: {
+    color: colors.textSecondary,
+  },
+  secondaryRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  secondaryButton: {
+    flex: 1,
+    minHeight: touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
     borderRadius: radius.md,
-    backgroundColor: colors.accentPressed,
-  },
-  primaryText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  outlineButton: {
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  outlineText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  disabledButton: {
     borderColor: colors.borderSubtle,
-    opacity: 0.7,
   },
-  disabledText: {
+  secondaryText: {
     color: colors.textSecondary,
-  },
-  ghostButton: {
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ghostText: {
-    color: colors.textSecondary,
+    ...typography.label,
     fontSize: 15,
-    fontWeight: '600',
+    lineHeight: 20,
   },
-  pressed: {
-    opacity: 0.8,
+  secondaryTextActive: {
+    color: colors.accent,
   },
 })

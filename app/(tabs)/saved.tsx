@@ -3,59 +3,80 @@ import { ScrollView, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText } from '@/components/app-text'
+import { DateGroup } from '@/src/components/DateGroup'
 import { EmptyState } from '@/src/components/EmptyState'
-import { EventCard } from '@/src/components/EventCard'
 import { SectionHeader } from '@/src/components/SectionHeader'
 import { getAllEvents } from '@/src/data/eventCatalog'
 import { useFavorites } from '@/src/hooks/useFavorites'
-import { getEventStatus } from '@/src/utils/eventStatus'
-import { colors, spacing } from '@/src/theme'
+import { groupSavedEvents } from '@/src/utils/dateGroups'
+import { colors, screenPadding, sectionGap, spacing, typography } from '@/src/theme'
 
+/**
+ * Saved shortlist. Upcoming first (start ascending, grouped by event-local
+ * date), then Past events (most recent first). Saving never implies
+ * registration; unsave stays independent of navigation.
+ */
 export default function SavedScreen() {
   const now = useMemo(() => new Date(), [])
   const { favoriteIds, hydrated, isFavorite, toggleFavorite, persistError } = useFavorites()
 
-  const saved = useMemo(() => {
+  const { upcoming, past } = useMemo(() => {
     // Ids missing from the catalog are ignored quietly (plan §9).
     const events = favoriteIds
       .map((id) => getAllEvents().find((event) => event.id === id))
       .filter((event): event is NonNullable<typeof event> => Boolean(event))
-    const upcoming = events
-      .filter((event) => getEventStatus(event, now) !== 'ended')
-      .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
-    const ended = events
-      .filter((event) => getEventStatus(event, now) === 'ended')
-      .sort((a, b) => Date.parse(b.endAt) - Date.parse(a.endAt))
-    return [...upcoming, ...ended]
+    return groupSavedEvents(events, now)
   }, [favoriteIds, now])
 
   const openEvent = (id: string) => router.push(`/event/${id}`)
+  const savedCount = favoriteIds.length
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <AppText style={styles.pageTitle}>Saved</AppText>
+        {savedCount > 0 ? <AppText style={styles.count}>{savedCount} saved</AppText> : null}
         {persistError ? <AppText style={styles.persistError}>{persistError}</AppText> : null}
-        {hydrated && saved.length === 0 ? (
+        {hydrated && savedCount === 0 ? (
           <EmptyState
-            title="No saved events yet"
+            icon="bookmark-border"
+            title="Nothing saved yet"
             message="Save events from Discover to find them here, even after restarting the app."
             ctaLabel="Explore events"
             onCta={() => router.push('/(tabs)/discover')}
           />
         ) : (
-          <View style={styles.section}>
-            <SectionHeader title={`Your events (${saved.length})`} />
-            {saved.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                saved={isFavorite(event.id)}
-                onSave={toggleFavorite}
-                onOpen={openEvent}
-                now={now}
-              />
-            ))}
+          <View style={styles.sections}>
+            {upcoming.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title="Upcoming" />
+                {upcoming.map((group) => (
+                  <DateGroup
+                    key={group.key}
+                    group={group}
+                    now={now}
+                    isFavorite={isFavorite}
+                    onSave={toggleFavorite}
+                    onOpen={openEvent}
+                  />
+                ))}
+              </View>
+            ) : null}
+            {past.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title="Past events" />
+                {past.map((group) => (
+                  <DateGroup
+                    key={group.key}
+                    group={group}
+                    now={now}
+                    isFavorite={isFavorite}
+                    onSave={toggleFavorite}
+                    onOpen={openEvent}
+                  />
+                ))}
+              </View>
+            ) : null}
           </View>
         )}
       </ScrollView>
@@ -69,22 +90,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.canvas,
   },
   content: {
-    padding: spacing.base,
+    padding: screenPadding,
     paddingBottom: spacing.xxl,
     gap: spacing.md,
   },
   pageTitle: {
     color: colors.textPrimary,
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 34,
+    ...typography.pageTitle,
+  },
+  count: {
+    color: colors.textSecondary,
+    ...typography.label,
   },
   persistError: {
     color: colors.warning,
-    fontSize: 13,
-    lineHeight: 18,
+    ...typography.label,
+  },
+  sections: {
+    gap: sectionGap,
   },
   section: {
-    gap: spacing.md,
+    gap: spacing.lg,
   },
 })

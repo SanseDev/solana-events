@@ -24,7 +24,7 @@ export function WalletStatusCard({ session }: { session: WalletSession }) {
         <>
           <View style={styles.connectedHeader}>
             <View style={styles.dot} />
-            <AppText style={styles.connectedLabel}>Wallet connected</AppText>
+            <AppText style={styles.connectedLabel}>Connected address</AppText>
           </View>
           <Pressable
             onPress={copyAddress}
@@ -56,15 +56,14 @@ export function WalletStatusCard({ session }: { session: WalletSession }) {
           <AppText style={styles.title}>Wallet unavailable on web</AppText>
           <AppText style={styles.message}>
             Mobile Wallet Adapter requires the Android app with a native wallet such as Seeker or Phantom. The event
-            catalog, saved events, and interests all work here without a wallet.
+            catalog, saved events, and preferences all work here without a wallet.
           </AppText>
         </>
       ) : (
         <>
           <AppText style={styles.title}>Connect your wallet</AppText>
           <AppText style={styles.message}>
-            Connect a Mobile Wallet Adapter wallet to personalize your experience. The event catalog works fully without
-            it.
+            Connect a compatible wallet to show its public address on this device.
           </AppText>
           <Pressable
             onPress={connect}
