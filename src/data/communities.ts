@@ -13,6 +13,11 @@ export const COMMUNITIES: readonly Community[] = [
     description: 'Regional Solana builder collectives across India, Brazil, and beyond.',
   },
   {
+    id: 'la-familia',
+    name: 'La Familia',
+    description: 'Solana builder community behind El Encuentro and ecosystem growth in Spain.',
+  },
+  {
     id: 'islanddao',
     name: 'IslandDAO',
     description: 'Builder residency community based in Florianópolis, Brazil.',

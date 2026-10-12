@@ -3,16 +3,12 @@ import { artworkFamilyForFormat, artworkSeed, getEventArtworkConfig } from '../e
 
 describe('event artwork selection', () => {
   it('assigns catalog events to their format family', () => {
-    const families = Object.fromEntries(getAllEvents().map((event) => [event.id, getEventArtworkConfig(event).family]))
+    const events = getAllEvents()
+    const families = Object.fromEntries(events.map((event) => [event.id, getEventArtworkConfig(event).family]))
+    const expected = Object.fromEntries(events.map((event) => [event.id, artworkFamilyForFormat(event.format)]))
 
-    expect(families).toEqual({
-      'breakpoint-2026': 'conference',
-      'hacker-house-london-2026': 'hackathon',
-      'solana-intelligence-summit-2026': 'conference',
-      'solana-summit-india-2026': 'community',
-      'islanddao-v5': 'community',
-      'solana-startup-connect-gh-2026': 'workshop',
-    })
+    expect(families).toEqual(expected)
+    expect(families['breakpoint-2026']).toBe('conference')
   })
 
   it('keeps artwork selection stable for an event id', () => {

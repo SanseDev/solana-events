@@ -1,0 +1,112 @@
+# Catalog audit — 2026-10-12 expansion
+
+Verification window: 2026-10-12 ~11:30–11:45 UTC (pages fetched directly; JSON-LD
+structured metadata + rendered descriptions read per page). Existing count: 6.
+Added: 46. Final count: 52. Pending: 1 (+2 trap pages outside the queue). Excluded: 1.
+
+Cross-check sources: luma.com/BP-SideEvents (all section-E pages present),
+solana.com/events (Breakpoint, Hacker House, Demo Day, Scale or Die listed),
+au.superteam.fun (dates for candidates 1, 5, 7, 17 confirmed). No candidate
+duplicated an existing catalog id or an existing event's timestamp.
+
+## A. Online sessions and community events
+
+| #   | Event                                                | Verdict | Verified schedule (source)                                                          | Notes                                                                                         |
+| --- | ---------------------------------------------------- | ------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | The Solana Ecosystem Call \| October                 | Added   | 2026-10-29 14:00–15:00 UTC (luma.com/0j8gx7i1)                                      | Free online RSVP; SOL BROTHERS Studio with Solana Foundation; matches au.superteam.fun anchor |
+| 2   | Build For Breakpoint: Office Hours with Joe Takayama | Added   | 2026-10-12 12:00–13:00 +01:00 (luma.com/build-for-breakpoint-office-hours-with-joe) | Ongoing at verification (started 11:00 UTC); limited to 3 founders; Google Meet               |
+| 3   | Build For Breakpoint: How to Product Test            | Added   | 2026-10-15 16:00–17:00 +01:00 (luma.com/build-for-breakpoint-the-smallest-test)     | Online workshop, Superteam UK / Foundation Ventures                                           |
+| 4   | Build For Breakpoint: Security and Audits            | Added   | 2026-10-16 11:00–12:00 +01:00 (luma.com/build-for-breakpoint-security-and-audits)   | Online workshop, Softstack-led                                                                |
+| 5   | Superteam member office hours                        | Added   | 2026-10-14 16:30–18:30 +02:00 = 14:30 UTC (luma.com/member-office-hours)            | Members-only; "Every Wednesday 2:30 PM UTC" consistent with structured time                   |
+| 6   | Canada Demo Day Watch Party                          | Added   | 2026-10-14 13:00–16:00 -04:00 (luma.com/superteam-lbhe)                             | Online watch party of Colosseum demo day                                                      |
+| 7   | What's Next After Colosseum?                         | Added   | 2026-10-19 18:00–19:00 +11:00 (luma.com/superteam-0tbb)                             | Open to hackathon entrants; matches au.superteam.fun anchor                                   |
+| 8   | Superteam India Poker Night                          | Added   | 2026-10-17 21:30–22:30 +05:30 (luma.com/stin-pokernight)                            | Online on Nomad Poker; prize pool explicitly devnet SOL — no real-funds claim made            |
+
+## B. European builder events
+
+| #   | Event                      | Verdict | Verified schedule (source)                                      | Notes                                                                                                             |
+| --- | -------------------------- | ------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 9   | WARSAW DEMO DAY            | Added   | 2026-10-13 18:00–22:00 +02:00 (luma.com/stpldemoday)            | Venue: The Shire, Zebra Tower (12th floor). Pitching requires Colosseum registration + form; audience = free RSVP |
+| 10  | London Demo Dinner         | Added   | 2026-10-13 17:30–21:30 +01:00 (luma.com/London-DemoDinner-2026) | Invite-only, curated; QR code required                                                                            |
+| 11  | Founders & Funders: Berlin | Added   | 2026-10-15 18:00–22:00 +02:00 (luma.com/demodinner)             | Private dinner; prose confirms 15.10 18:00–22:00                                                                  |
+| 12  | Co-Working Fridays Berlin  | Added   | 2026-10-16 10:00–18:00 +02:00, w3.hub (luma.com/n1nuqd8c)       | ⚠ Contradiction: prose says "Circuit Berlin" and 09:00 doors; structured venue w3.hub + 10:00 used and flagged    |
+| 13  | Co-Working Fridays: London | Added   | 2026-10-16 10:00–20:00 +01:00 (luma.com/london-oct-16)          | ⚠ Prose says "10:00AM–8:30PM"; structured end 20:00 used and flagged. Approval-only entry                         |
+| 14  | Project Harmonia Frankfurt | Added   | 2026-10-19 18:00–21:30 +02:00 (luma.com/Harmonia-Frankfurt)     | Invite-only institutional salon; address shared with approved guests                                              |
+| 15  | El Encuentro               | Added   | 2026-10-26 10:00–22:00 +01:00 (luma.com/66thrqij)               | La Familia flagship, Madrid; program on lafamilia.so. New community `la-familia` added                            |
+
+## C. Other international events
+
+| #   | Event                                  | Verdict | Verified schedule (source)                                                       | Notes                                                                                                                            |
+| --- | -------------------------------------- | ------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 16  | Stablecoin Connect: Panel & Mixer      | Added   | 2026-10-15 19:00–22:00 +04:00 (luma.com/StablecoinConnectSolanaAquanowUniversal) | Invite-only, no walk-ins, address upon approval; matches 19:00–22:00 anchor                                                      |
+| 17  | Rust Melbourne Meetup                  | Added   | 2026-10-22 17:30–20:00 +11:00 (luma.com/fdvdqkq9)                                | Rust meetup sponsored by Superteam AU (not Solana-only programming); Stone & Chalk, 121 King St; matches au.superteam.fun anchor |
+| 18  | 20/20 Vision: Solana x Huma Happy Hour | Added   | 2026-10-20 17:00–19:00 -07:00 (luma.com/solana-huma-happy-hour)                  | The Venetian, Las Vegas (alongside Money20/20); exact room shared later; approval required                                       |
+
+## D. Canadian VibeStation occurrences
+
+All 12 published occurrence pages verified individually; each is a distinct Friday
+session with city-specific times. All free with approval-based registration.
+IDs are occurrence-specific (`{city}-vibestation-{date}`).
+
+| #   | Page              | Verdict | Verified schedule                                                                                                                                                                 |
+| --- | ----------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 19  | luma.com/ka6rityl | Added   | Toronto 2026-10-16 09:30–18:00 -04:00                                                                                                                                             |
+| 20  | luma.com/vi07rwlu | Added   | Toronto 2026-10-23 09:30–18:00 -04:00                                                                                                                                             |
+| 21  | luma.com/mspwm8hn | Added   | Toronto 2026-10-30 09:30–18:00 -04:00                                                                                                                                             |
+| 22  | luma.com/axcqt5r3 | Added   | Toronto 2026-11-06 09:30–18:00 -05:00 (EST, post-DST ✓)                                                                                                                           |
+| 23  | luma.com/r40yqddb | Added   | Montréal 2026-10-16 09:30–18:00 -04:00                                                                                                                                            |
+| 24  | luma.com/izc6bvfp | Added   | Montréal 2026-10-23 09:30–18:00 -04:00                                                                                                                                            |
+| 25  | luma.com/auj78wwi | Added   | Montréal 2026-10-30 09:30–18:00 -04:00                                                                                                                                            |
+| 26  | luma.com/8mzapssx | Added   | Montréal 2026-11-06 09:30–18:00 -05:00 (EST ✓)                                                                                                                                    |
+| 27  | luma.com/fetmgtrz | Added   | Vancouver 2026-10-16 09:30–18:00 -07:00                                                                                                                                           |
+| 28  | luma.com/ydg8swsd | Added   | Vancouver 2026-10-23 09:30–18:00 -07:00                                                                                                                                           |
+| 29  | luma.com/7kc2frg9 | Added   | Vancouver 2026-10-30 09:30–18:00 -07:00                                                                                                                                           |
+| 30  | luma.com/8auwgdns | Added   | Vancouver 2026-11-06 09:30–18:00 -07:00 — ⚠ page publishes -07:00 although PST (-08:00) applies after Nov 1; published instant kept verbatim, wall-clock 09:30 matches the series |
+
+## E. Breakpoint ecosystem events
+
+All 16 imported pages confirmed present on luma.com/BP-SideEvents. Listing there
+does not imply Solana Foundation organization; organizers recorded per page.
+
+| #   | Event                                         | Verdict     | Verified schedule (source)                                                                                                            | Notes                                                                                                                                                                                                                                    |
+| --- | --------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 31  | Solana Demo Day \| London 2026                | Added       | 2026-11-12 10:00–18:30 +00:00 (luma.com/sol-demo-day)                                                                                 | ⚠ Metadata says Offline, description says livestreamed → imported as hybrid. Free, approved guests only                                                                                                                                  |
+| 32  | Scale or Die                                  | Added       | 2026-11-14 09:30–18:30 +00:00 (luma.com/scale-or-die-26)                                                                              | Application-only; free; Solana Accelerate + Solana Foundation                                                                                                                                                                            |
+| 33  | Pr1me [London Series]                         | Added       | 2026-11-16 19:00–22:00 +00:00 (luma.com/aqntywn2)                                                                                     | Finance professionals only; invite-only; QR code entry                                                                                                                                                                                   |
+| 34  | Money Layer @Breakpoint Week                  | Added       | 2026-11-16 18:30–22:00 +00:00 (luma.com/xykfcf1a)                                                                                     | Prose confirms "16 November 2026 · 6:30–10:00 PM"                                                                                                                                                                                        |
+| 35  | CodeCup: AI x Solana Builder Arena            | **Pending** | Structured 2026-11-08 10:00 → 2026-11-17 15:00 +00:00 vs description "day … Sunday, November 15, 2026" at Olympia (luma.com/ol25ta77) | Irresolvable contradiction between the 9-day structured window and the single-day description; exact schedule unverified → not imported. Missing field: a defensible single schedule                                                     |
+| 36  | 200ms                                         | Added       | 2026-11-13 09:00–18:00 +00:00 (luma.com/6xip72je)                                                                                     | Jito; free but selective (builders/core devs/traders); Olympia                                                                                                                                                                           |
+| 37  | Purple Table: Women Before Breakpoint         | Added       | 2026-11-13 11:00–14:00 +00:00 (luma.com/rszxbf8n)                                                                                     | Invitation-only; London                                                                                                                                                                                                                  |
+| 38  | 445 CREW x Solana Breakpoint \| Community Run | Added       | 2026-11-14 09:15–11:45 +00:00 (luma.com/n6r4k7vb)                                                                                     | Fulham Pier; agenda matches structured times                                                                                                                                                                                             |
+| 39  | Solana Cup at Breakpoint                      | Added       | 2026-11-14 10:00–16:00 +00:00 (luma.com/5sf70a63)                                                                                     | Venue unpublished; announcements via t.me/solanafootball; city (London) from description                                                                                                                                                 |
+| 40  | Founder x VC Summit \| Demo Day               | Added       | 2026-11-14 11:00–17:00 +00:00 (luma.com/a4qnux81)                                                                                     | Ticket verified: General Admission $149, InStock                                                                                                                                                                                         |
+| 41  | Tilt Pay Morning Coffee                       | Added       | 2026-11-15 08:30–10:00 +00:00 (luma.com/kk8dr4ty)                                                                                     | Free breakfast; London                                                                                                                                                                                                                   |
+| 42  | BlockZero 2026                                | Added       | 2026-11-15 08:30–17:00 +00:00 (luma.com/dmxdc394)                                                                                     | ICC at Olympia; approval-based capacity; matches Nov 15 anchor                                                                                                                                                                           |
+| 43  | Breakpoint Trading Battle                     | Added       | 2026-11-15 17:00 +01:00 → 2026-11-17 17:00 +01:00 (luma.com/h6w8v75y)                                                                 | ⚠ Metadata says Offline; description says "100% Online Event" → imported as online. Instants equal the prose "4:00 PM GMT" start/end (16:00 UTC). Virtual funds only, free, no deposits; registration = game.tradingbattles.com/join/302 |
+| 44  | Founder x VC Summit \| VIP Dinner             | Added       | 2026-11-15 19:00–22:00 +00:00 (luma.com/hrb0040d)                                                                                     | Distinct from Demo Day; invitation-only; ticket verified: $249                                                                                                                                                                           |
+| 45  | Licence to Spend: Altitude and Rain           | Added       | 2026-11-16 17:00–20:00 +00:00 (luma.com/altitude-rain-BP26)                                                                           | Approval required; priority for Altitude users                                                                                                                                                                                           |
+| 46  | BEYOND THE FRAME (Render Network x Solana)    | Added       | 2026-11-16 19:30–22:00 +00:00 (luma.com/frzpha3k)                                                                                     | FRAMELESS, 6 Marble Arch W1H 7AP (prose confirms 7:30–10 PM); ⚠ RSVP currently SoldOut — imported as scheduled, capacity noted                                                                                                           |
+| 47  | New Friendship Tech \| London                 | Added       | 2026-11-16 20:00 → 2026-11-17 02:00 +00:00 (luma.com/yrxbkvmn)                                                                        | Secret venue; shuttle from the conference                                                                                                                                                                                                |
+
+## F. Adjacent ecosystem
+
+| #   | Event                                                                      | Verdict      | Reason                                                                                                                                                                                                                                          |
+| --- | -------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 48  | Ledger OP3N 2026 (Paris, 2026-10-15 13:00–18:00 +02:00, luma.com/54c9x6ri) | **Excluded** | Out of editorial scope: general digital-security conference organized by Ledger, not a Solana-ecosystem event; a Solana Labs speaker on the agenda is adjacent relevance only. Dates were fully verifiable; exclusion is editorial, not factual |
+
+## Known traps resolved
+
+- `luma.com/8uhc300o` and `luma.com/sejn139p` (Superteam Canada "Community Call"):
+  structured dates 2026-11-05 / 2026-12-03 vs description "Thursday, Jul 3rd".
+  Schedule/year conflict unresolved → **pending**, not imported.
+- "NO VibeStation due to Breakpoint" pages are cancellation notices → never imported.
+- Old Paris Bakery / Lisbon Breakpoint / Abu Dhabi December pages did not enter the
+  queue; no action needed.
+
+## Corrections to existing events
+
+None required. The six pre-existing entries were re-checked against solana.com/events
+and their Luma pages during this pass; dates, venues, and restrictions still match.
+(Passing note: the Demo Day page describes Hacker House London as running at Somerset
+House Nov 1–12; the existing `hacker-house-london-2026` entry intentionally keeps the
+address-disclosed-to-registrants wording and needs no change.)
